@@ -34,6 +34,10 @@ const LandingPage = () => {
   const [length, setLength] = useState('medium');
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [result, setResult] = useState(null);
+  const [storyline, setStoryline] = useState(null);
+  const [scenes, setScenes] = useState([]);
+  const [images, setImages] = useState([]);
   const navigate = useNavigate();
   const { setComicStyle: setGlobalComicStyle } = useTheme();
   const t = TRANSLATIONS[currentLanguage];
@@ -79,9 +83,35 @@ const LandingPage = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showLanguageMenu]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Add your submit logic here, use the selected length
+    setIsLoading(true);
+    setError('');
+    setResult(null);
+    setStoryline(null);
+    setScenes([]);
+    setImages([]);
+    try {
+      const res = await fetch(`${API_BASE_URL}search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          query: topic,
+          style: comicStyle,
+          length: length
+        })
+      });
+      if (!res.ok) throw new Error('Failed to generate comic.');
+      const html = await res.text();
+      // Parse the HTML response to extract data (simple approach)
+      // In production, use a JSON API for better structure
+      // For now, just show the HTML as a fallback
+      setResult({ html });
+    } catch (err) {
+      setError('Failed to generate comic.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Fetch suggestions from Flask backend
@@ -240,6 +270,16 @@ const LandingPage = () => {
                   </button>
                 </form>
                 
+                {result && result.html && (
+                  <div className="mt-8">
+                    <div className="bg-white border-2 border-black rounded-lg p-4" dangerouslySetInnerHTML={{ __html: result.html }} />
+                  </div>
+                )}
+                {error && (
+                  <div className="mt-4 text-center text-red-600 font-bold bg-red-100 border-2 border-red-400 rounded-lg p-3">
+                    {error}
+                  </div>
+                )}
               </div>
             </div>
           </div>
