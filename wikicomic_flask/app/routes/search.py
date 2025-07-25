@@ -13,8 +13,7 @@ def search():
     query = request.values.get('query')
     style = request.values.get('style', 'Manga')
     length = request.values.get('length', 'medium')
-    # numscenes = request.values.get('numscenes', '5')
-    # numscenes = int(numscenes) if numscenes.isdigit() else 5
+    
 
     result, error, storyline, scenes, comic_images = None, None, None, [], []
 
