@@ -7,7 +7,7 @@ def create_app():
     app.config.from_object(Config)
 
     # Enable CORS for all routes
-    CORS(app)
+    CORS(app, origins=["https://wiki-comic.vercel.app"])
 
     # Register Blueprints
     from .routes.home import home_bp

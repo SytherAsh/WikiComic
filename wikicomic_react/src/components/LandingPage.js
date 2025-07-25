@@ -20,7 +20,7 @@ import 'react-responsive-modal/styles.css';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import QuizComponent from './QuizComponent';
 
-const API_BASE_URL = 'http://localhost:5000/';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://wiki-comic-ash.vercel.app/';
 
 const LandingPage = () => {
   const [topic, setTopic] = useState('');

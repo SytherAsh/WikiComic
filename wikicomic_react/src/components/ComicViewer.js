@@ -6,7 +6,7 @@ import QuizComponent from './QuizComponent';
 import { Modal } from 'react-responsive-modal';
 import 'react-responsive-modal/styles.css';
 
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://wiki-comic-ash.vercel.app';
 
 const ComicViewer = () => {
   const { id } = useParams();
