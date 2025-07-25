@@ -5,6 +5,13 @@ import { useTheme } from '../contexts/ThemeContext';
 
 const API_BASE_URL = 'http://localhost:5000';
 
+function getImageUrl(image) {
+  if (!image) return '/placeholder-comic.png';
+  if (image.startsWith('http')) return image;
+  // Encode spaces and special characters
+  return API_BASE_URL + encodeURI(image);
+}
+
 const ComicsGallery = () => {
   const [comics, setComics] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -103,38 +110,34 @@ const ComicsGallery = () => {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
             {comics.map((comic) => (
               <div
                 key={comic.title}
-                className="bg-white border-4 border-black rounded-lg overflow-hidden transform hover:rotate-1 hover:scale-105 transition-all duration-300"
-                style={{ boxShadow: '6px 6px 0 rgba(0,0,0,0.8)' }}
+                className="bg-gradient-to-br from-yellow-200 via-pink-100 to-blue-200 border-4 border-black rounded-2xl overflow-hidden transform hover:scale-105 hover:shadow-2xl transition-all duration-300"
+                style={{ boxShadow: '8px 8px 0 #000' }}
               >
-                <div 
-                  className="relative aspect-w-16 aspect-h-9 cursor-pointer group" 
+                <div
+                  className="relative aspect-w-16 aspect-h-9 cursor-pointer group"
                   onClick={() => handleViewComic(comic.title)}
                 >
-                  {comic.images && comic.images[0] && (
-                    <img
-                      src={comic.images[0]}
-                      alt={comic.title}
-                      className="object-cover w-full h-48"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = '/placeholder-comic.png';
-                      }}
-                    />
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="bg-yellow-400 text-black px-4 py-2 rounded-full font-bold border-2 border-black transform rotate-2" style={{ boxShadow: '3px 3px 0 rgba(0,0,0,0.8)' }}>
-                        View Comic
-                      </span>
-                    </div>
+                  <img
+                    src={getImageUrl(comic.images && comic.images[0])}
+                    alt={comic.title}
+                    className="object-cover w-full h-48 rounded-t-2xl border-b-4 border-black bg-white"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = '/placeholder-comic.png';
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <span className="bg-yellow-300 text-black px-6 py-3 rounded-full font-extrabold border-2 border-black text-xl shadow-lg" style={{ fontFamily: 'Bangers, Comic Sans MS, Comic, cursive' }}>
+                      View Comic
+                    </span>
                   </div>
                 </div>
-                <div className="p-4 border-t-4 border-black bg-gradient-to-b from-white to-gray-50">
-                  <h3 className="text-xl font-bold mb-2 truncate">
+                <div className="p-4 border-t-4 border-black bg-white rounded-b-2xl">
+                  <h3 className="text-xl font-extrabold mb-2 truncate" style={{ fontFamily: 'Bangers, Comic Sans MS, Comic, cursive' }}>
                     {comic.title}
                   </h3>
                   <div className="flex items-center justify-between">

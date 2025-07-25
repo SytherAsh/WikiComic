@@ -1,7 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import ComicFlipbook from './ComicFlipbook';
 
-const API_BASE_URL = 'http://localhost:5000/';
+const API_BASE_URL = 'http://localhost:5000';
+
+function getImageUrl(image) {
+  if (!image) return '/placeholder-comic.png';
+  if (image.startsWith('http')) return image;
+  // Encode spaces and special characters
+  return API_BASE_URL + encodeURI(image);
+}
 
 const PreviousComics = () => {
   const [comics, setComics] = useState([]);
@@ -38,7 +45,11 @@ const PreviousComics = () => {
             <div key={comic.title} className="border-2 border-black rounded-lg p-2 cursor-pointer hover:bg-gray-100" onClick={() => setSelectedComic(comic)}>
               <div className="font-bold mb-2">{comic.title}</div>
               {comic.images && comic.images[0] && (
-                <img src={comic.images[0]} alt={comic.title} className="w-full h-40 object-cover rounded" />
+                <img
+                  src={getImageUrl(comic.images && comic.images[0])}
+                  alt={comic.title}
+                  className="w-full h-40 object-cover rounded"
+                />
               )}
             </div>
           ))}
