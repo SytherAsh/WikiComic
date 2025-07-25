@@ -208,60 +208,54 @@ const ComicViewer = () => {
   const scene = comic.scenes[currentScene];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 py-8 px-4">
-      <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-4">{comic.title}</h1>
-          <button
-            onClick={() => navigate('/gallery')}
-            className="inline-flex items-center px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 mb-4"
-          >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to Gallery
-          </button>
-        </div>
-        <div className="bg-white border-4 border-black rounded-lg shadow-xl p-6 mb-6">
-          <div className="mb-4 flex justify-center">
-            <img
-              src={scene.image}
-              alt={`Scene ${currentScene + 1}`}
-              className="w-full max-w-lg mx-auto rounded-lg border-4 border-black"
-            />
-          </div>
-          <div className="scene-dialogue bg-gray-100 border-2 border-black rounded-lg p-4 mb-4 text-lg min-h-[60px]">
-            {scene.dialogue}
-          </div>
-          <div className="flex justify-between items-center mb-4">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex items-center justify-center py-8 px-4">
+      <div className="bg-white border-4 border-black rounded-xl shadow-2xl flex w-full max-w-5xl min-h-[600px]">
+        {/* Main Image */}
+        <div className="flex-1 flex flex-col items-center justify-center p-6">
+          <h1 className="text-3xl font-bold mb-4 text-center">{comic.title}</h1>
+          <img
+            src={scene.image.startsWith('http') ? scene.image : `${API_BASE_URL}${scene.image}`}
+            alt={`Scene ${currentScene + 1}`}
+            className="w-full max-w-2xl h-[400px] object-contain rounded-lg border-4 border-black bg-gray-100"
+            style={{ background: '#fff' }}
+          />
+          <div className="flex justify-center items-center gap-4 mt-6">
             <button
               onClick={handlePreviousScene}
               disabled={currentScene === 0}
-              className={`px-4 py-2 bg-gray-300 rounded-lg border-2 border-black font-bold ${currentScene === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className="px-6 py-2 bg-gray-300 rounded-lg border-2 border-black font-bold text-lg disabled:opacity-50"
             >
               Previous
             </button>
-            <span className="font-bold">
+            <span className="font-bold text-lg">
               Scene {currentScene + 1} of {comic.scenes.length}
             </span>
             <button
               onClick={handleNextScene}
               disabled={currentScene === comic.scenes.length - 1}
-              className={`px-4 py-2 bg-gray-300 rounded-lg border-2 border-black font-bold ${currentScene === comic.scenes.length - 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className="px-6 py-2 bg-gray-300 rounded-lg border-2 border-black font-bold text-lg disabled:opacity-50"
             >
               Next
             </button>
           </div>
-          <div className="flex mt-4 space-x-2 overflow-x-auto justify-center">
+          {/* Thumbnails */}
+          <div className="flex mt-6 space-x-2 overflow-x-auto">
             {comic.scenes.map((s, idx) => (
               <img
                 key={idx}
-                src={s.image}
+                src={s.image.startsWith('http') ? s.image : `${API_BASE_URL}${s.image}`}
                 alt={`Thumbnail ${idx + 1}`}
                 className={`w-16 h-16 object-cover rounded border-2 cursor-pointer ${currentScene === idx ? 'border-blue-500' : 'border-gray-300'}`}
                 onClick={() => setCurrentScene(idx)}
               />
             ))}
+          </div>
+        </div>
+        {/* Sidebar for Dialogue */}
+        <div className="w-80 bg-gray-50 border-l-4 border-black p-6 flex flex-col">
+          <h2 className="text-xl font-bold mb-4">Dialogue</h2>
+          <div className="flex-1 overflow-y-auto text-lg whitespace-pre-line">
+            {scene.dialogue}
           </div>
         </div>
       </div>
