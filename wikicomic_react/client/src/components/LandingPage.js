@@ -215,11 +215,12 @@ const LandingPage = () => {
                       key={len}
                       type="button"
                       onClick={() => setLength(len)}
-                      className={`px-6 py-2 rounded-full font-bold border-2 border-black transition-all duration-150 ${
-                        length === len
-                          ? 'bg-blue-600 text-white scale-105 shadow-lg'
-                          : 'bg-white text-blue-600 hover:bg-blue-100'
-                      }`}
+                      className={`px-8 py-3 rounded-lg font-extrabold border-4 border-black shadow-lg transition-all duration-150 text-xl tracking-wide
+                        ${length === len
+                          ? 'bg-gradient-to-r from-yellow-300 via-pink-300 to-blue-300 text-black scale-105'
+                          : 'bg-white text-blue-700 hover:bg-gradient-to-r hover:from-yellow-200 hover:via-pink-100 hover:to-blue-200 hover:text-black'}
+                      `}
+                      style={{ fontFamily: 'Bangers, Comic Sans MS, Comic, cursive', minWidth: '120px', boxShadow: '4px 4px 0 #000' }}
                     >
                       {len.charAt(0).toUpperCase() + len.slice(1)}
                     </button>
