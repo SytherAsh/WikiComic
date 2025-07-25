@@ -5,8 +5,8 @@ load_dotenv()
 
 class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev')
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:///wikicomic.db')
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    # SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:///wikicomic.db')
+    # SQLALCHEMY_TRACK_MODIFICATIONS = False
     # Add your API keys here
     GROQ_API_KEY = os.getenv('GROQ_API_KEY')
     HF_TOKEN = os.getenv('HF_TOKEN')
