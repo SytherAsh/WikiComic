@@ -13,10 +13,11 @@ def create_app():
     from .routes.home import home_bp
     from .routes.search import search_bp
     from .routes.input import input_bp
-    
+    from .routes.comics import comics_bp
     app.register_blueprint(home_bp)
     app.register_blueprint(search_bp)
     app.register_blueprint(input_bp)
+    app.register_blueprint(comics_bp)
 
 
     return app

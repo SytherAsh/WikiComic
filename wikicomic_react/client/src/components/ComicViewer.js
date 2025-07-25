@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useTheme } from '../contexts/ThemeContext';
 import QuizComponent from './QuizComponent';
 
-const API_BASE_URL = 'http://localhost:8000/comic';
+const API_BASE_URL = 'http://localhost:5000';
 
 const ComicViewer = () => {
   const { id } = useParams();
@@ -22,23 +22,27 @@ const ComicViewer = () => {
 
   useEffect(() => {
     fetchComic();
+    // eslint-disable-next-line
   }, [id]);
 
   const fetchComic = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE_URL}/api/comics/?comic_id=${id}`);
-      const comicData = response.data.results.find(c => c.id === id);
-      if (comicData) {
-        setComic(comicData);
-        setComicStyle(comicData.comicStyle);
-        setError(null);
+      const response = await axios.get(`${API_BASE_URL}/comics`);
+      if (response.data && response.data.comics) {
+        const found = response.data.comics.find(c => c.title === id);
+        if (found) {
+          setComic(found);
+          setComicStyle(found.comicStyle);
+          setError(null);
+        } else {
+          setError('Comic not found');
+        }
       } else {
-        setError('Comic not found');
+        setError('Invalid response format');
       }
     } catch (err) {
       setError('Failed to load comic');
-      console.error('Error loading comic:', err);
     } finally {
       setLoading(false);
     }
@@ -200,281 +204,67 @@ const ComicViewer = () => {
     );
   }
 
-  const currentSceneData = comic.scenes[currentScene];
-  const { overlayColor, panelStyle, pageStyle, buttonStyle, explosionColor } = getThemeClasses();
+  // Flipbook UI
+  const scene = comic.scenes[currentScene];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 py-8 px-4">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
+      <div className="max-w-3xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-4">{comic.title}</h1>
-          <div className="flex items-center justify-center space-x-4">
-            <button
-              onClick={() => navigate('/gallery')}
-              className="inline-flex items-center px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600"
-            >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              Back to Gallery
-            </button>
-            <span className={`px-3 py-1 rounded-full text-sm ${
-              comic.status === 'completed' ? 'bg-green-900 text-green-200' : 'bg-red-900 text-red-200'
-            }`}>
-              {comic.status}
-            </span>
-          </div>
+          <button
+            onClick={() => navigate('/gallery')}
+            className="inline-flex items-center px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 mb-4"
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Gallery
+          </button>
         </div>
-
-        {/* Comic Scene Viewer */}
-        <div className="bg-gray-800 rounded-lg shadow-2xl overflow-hidden">
-          {/* Scene Navigation */}
-          <div className="p-4 bg-gray-900 flex items-center justify-between">
+        <div className="bg-white border-4 border-black rounded-lg shadow-xl p-6 mb-6">
+          <div className="mb-4 flex justify-center">
+            <img
+              src={scene.image}
+              alt={`Scene ${currentScene + 1}`}
+              className="w-full max-w-lg mx-auto rounded-lg border-4 border-black"
+            />
+          </div>
+          <div className="scene-dialogue bg-gray-100 border-2 border-black rounded-lg p-4 mb-4 text-lg min-h-[60px]">
+            {scene.dialogue}
+          </div>
+          <div className="flex justify-between items-center mb-4">
             <button
               onClick={handlePreviousScene}
               disabled={currentScene === 0}
-              className={`px-4 py-2 rounded-lg ${
-                currentScene === 0
-                  ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                  : 'bg-purple-600 text-white hover:bg-purple-700'
-              }`}
+              className={`px-4 py-2 bg-gray-300 rounded-lg border-2 border-black font-bold ${currentScene === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              Previous Scene
+              Previous
             </button>
-            <span className="text-white font-medium">
+            <span className="font-bold">
               Scene {currentScene + 1} of {comic.scenes.length}
             </span>
             <button
               onClick={handleNextScene}
               disabled={currentScene === comic.scenes.length - 1}
-              className={`px-4 py-2 rounded-lg ${
-                currentScene === comic.scenes.length - 1
-                  ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                  : 'bg-purple-600 text-white hover:bg-purple-700'
-              }`}
+              className={`px-4 py-2 bg-gray-300 rounded-lg border-2 border-black font-bold ${currentScene === comic.scenes.length - 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              Next Scene
+              Next
             </button>
           </div>
-
-          {/* Scene Image */}
-          <div className="relative aspect-w-16 aspect-h-9">
-            <img
-              src={`${API_BASE_URL}/media/${currentSceneData.image}`}
-              alt={`Scene ${currentScene + 1}`}
-              className="object-contain w-full h-full"
-            />
-          </div>
-
-          {/* Scene Info */}
-          <div className="p-6">
-            <h3 className="text-xl font-semibold text-white mb-2">
-              Scene {currentSceneData.number}
-            </h3>
-            {currentSceneData.dialogue && (
-              <div className="bg-gray-700 rounded-lg p-4 mb-4">
-                <p className="text-white whitespace-pre-line">
-                  {currentSceneData.dialogue}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Scene Thumbnails */}
-        <div className="mt-8 overflow-x-auto">
-          <div className="flex space-x-4 pb-4">
-            {comic.scenes.map((scene, index) => (
-              <button
-                key={scene.number}
-                onClick={() => setCurrentScene(index)}
-                className={`relative flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden border-2 ${
-                  currentScene === index ? 'border-purple-500' : 'border-transparent'
-                }`}
-              >
-                <img
-                  src={`${API_BASE_URL}/media/${scene.image}`}
-                  alt={`Scene ${scene.number} thumbnail`}
-                  className="object-cover w-full h-full"
-                />
-                <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-                  <span className="text-white text-sm font-medium">{scene.number}</span>
-                </div>
-              </button>
+          <div className="flex mt-4 space-x-2 overflow-x-auto justify-center">
+            {comic.scenes.map((s, idx) => (
+              <img
+                key={idx}
+                src={s.image}
+                alt={`Thumbnail ${idx + 1}`}
+                className={`w-16 h-16 object-cover rounded border-2 cursor-pointer ${currentScene === idx ? 'border-blue-500' : 'border-gray-300'}`}
+                onClick={() => setCurrentScene(idx)}
+              />
             ))}
           </div>
         </div>
       </div>
-
-      {/* Key points sidebar - slide in from right with comic styling */}
-      <div
-        className={`key-points-sidebar fixed inset-y-0 right-0 z-20 transition-transform duration-300 transform ${
-          showKeyPoints ? 'translate-x-0' : 'translate-x-full'
-        } w-80 bg-white border-l-4 border-black`}
-        style={{ 
-          marginTop: '61px',
-          boxShadow: '-5px 0 10px rgba(0,0,0,0.3)'
-        }}
-      >
-        <div className="relative h-full overflow-y-auto">
-          {/* Sidebar pattern background */}
-          <div className="absolute inset-0 opacity-5" style={{
-            backgroundImage: 'radial-gradient(#000 1px, transparent 1px)',
-            backgroundSize: '20px 20px'
-          }}></div>
-          
-          <div className="relative z-10 p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold font-comic bg-yellow-300 px-4 py-1 -rotate-2 border-2 border-black" style={{ boxShadow: '3px 3px 0 rgba(0,0,0,0.5)' }}>
-                KEY NOTES!
-              </h2>
-              <button
-                onClick={toggleKeyPoints}
-                className="text-gray-400 hover:text-black transform hover:rotate-90 transition-transform"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            
-            <div className="mb-6 font-comic bg-purple-100 border-2 border-purple-300 rounded-lg p-3 text-purple-800">
-              Page {currentScene + 1} of {comic.scenes.length}
-              <div className="text-xs mt-1">Capturing these points earns you XP!</div>
-            </div>
-            
-            <ul className="space-y-4">
-              {currentSceneData.dialogue && currentSceneData.dialogue.split('\n').filter(point => point.trim()).map((point, index) => (
-                <li key={index} className="animate-fadeIn" style={{ animationDelay: `${index * 100}ms` }}>
-                  <div className="bg-white border-2 border-black rounded-lg p-3 font-comic text-black relative" style={{ boxShadow: '3px 3px 0 rgba(0,0,0,0.3)' }}>
-                    {/* Small explosion in corner */}
-                    <div className="absolute -top-2 -left-2 w-8 h-8">
-                      {[...Array(8)].map((_, i) => (
-                        <div key={i} className="absolute left-1/2 top-1/2 bg-yellow-400 h-0.5" style={{
-                          width: '8px',
-                          transformOrigin: 'left center',
-                          transform: `rotate(${i * 45}deg)`
-                        }}></div>
-                      ))}
-                      <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-yellow-400 border border-black"></div>
-                    </div>
-                    
-                    <div className="pl-4">{point}</div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </div>
-      
-      {/* Overlay when sidebar is open */}
-      {showKeyPoints && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-10"
-          onClick={toggleKeyPoints}
-        ></div>
-      )}
-
-      {/* Keyboard shortcut hint */}
-      <div className="fixed bottom-4 left-4 bg-white border-2 border-black rounded-lg px-3 py-2 font-comic text-sm shadow-lg" style={{ boxShadow: '3px 3px 0 rgba(0,0,0,0.5)' }}>
-        <div className="flex items-center">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="2" y="4" width="20" height="16" rx="2" />
-            <path d="M9 9h6v6H9z" />
-            <path d="M9 1v3" />
-            <path d="M15 1v3" />
-            <path d="M9 20v3" />
-            <path d="M15 20v3" />
-          </svg>
-          <span className="ml-1 font-bold">PRO TIPS:</span>
-        </div>
-        <p>↑ and ↓ keys to navigate pages</p>
-        <p>Press "i" to toggle key points</p>
-      </div>
-      
-      {/* Achievement notification */}
-      {achievementUnlocked && (
-        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 bg-yellow-400 text-black font-comic px-8 py-4 rounded-lg border-3 border-black shadow-xl z-50 animate-wiggle" style={{ boxShadow: '5px 5px 0 rgba(0,0,0,0.8)' }}>
-          <div className="relative">
-            {/* Explosion rays */}
-            <div className="absolute -inset-4">
-              {[...Array(12)].map((_, i) => (
-                <div key={i} className="absolute left-1/2 top-1/2 bg-yellow-300 h-1" style={{
-                  width: '30px',
-                  transformOrigin: 'left center',
-                  transform: `translate(-50%, -50%) rotate(${i * 30}deg)`
-                }}></div>
-              ))}
-            </div>
-            
-            <div className="flex flex-col items-center relative">
-              <div className="flex items-center mb-3">
-                <svg className="h-8 w-8 mr-3 text-yellow-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="gold" stroke="currentColor" />
-                </svg>
-                <div>
-                  <div className="text-xl font-bold">ACHIEVEMENT UNLOCKED!</div>
-                  <div className="text-lg">Comic Completed: +50 XP</div>
-                </div>
-              </div>
-              
-              <button 
-                onClick={handleStartQuiz}
-                className="mt-2 bg-gradient-to-r from-purple-600 to-blue-500 text-white px-5 py-2 rounded-lg border-2 border-black transform hover:scale-105 transition-transform"
-                style={{ boxShadow: '3px 3px 0 rgba(0,0,0,0.5)' }}
-              >
-                Test Your Knowledge! Take The Quiz!
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Comic-style footer */}
-      <footer className="mt-12 py-4 bg-blue-800 text-white relative overflow-hidden" style={{ borderTop: '3px solid black' }}>
-        <div className="comic-dots absolute inset-0 opacity-20" style={{
-          backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)',
-          backgroundSize: '10px 10px'
-        }}></div>
-        
-        <div className="container mx-auto text-center relative z-10">
-          <p className="text-lg font-bold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>WIKICOMICS - LEARN IN STYLE!</p>
-        </div>
-        
-        {/* Comic style explosion lines */}
-        <div className="absolute left-1/4 bottom-0 w-20 h-20">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="absolute left-0 bottom-0 bg-yellow-300 h-1" style={{
-              width: '20px',
-              transformOrigin: '0 100%',
-              transform: `rotate(${i * 30}deg)`,
-              opacity: 0.7
-            }}></div>
-          ))}
-        </div>
-        
-        <div className="absolute right-1/4 bottom-0 w-20 h-20">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="absolute right-0 bottom-0 bg-yellow-300 h-1" style={{
-              width: '20px',
-              transformOrigin: '100% 100%',
-              transform: `rotate(${-i * 30}deg)`,
-              opacity: 0.7
-            }}></div>
-          ))}
-        </div>
-      </footer>
-
-      {/* Show quiz if it's active */}
-      {showQuiz && (
-        <QuizComponent 
-          quizData={generateQuizData()} 
-          onComplete={handleQuizComplete} 
-          comicTopic={comic.title}
-        />
-      )}
     </div>
   );
 };

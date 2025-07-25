@@ -14,6 +14,7 @@ import RecentTopics from './RecentTopics';
 import MainForm from './MainForm';
 import Footer from './Footer';
 import { LANGUAGES, TRANSLATIONS } from './constants';
+import ComicResult from './ComicResult';
 
 const API_BASE_URL = 'http://localhost:5000/';
 
@@ -83,6 +84,7 @@ const LandingPage = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showLanguageMenu]);
 
+  // Only keep handleSubmit and fetchSuggestions that use /search and /suggest endpoints
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -94,7 +96,7 @@ const LandingPage = () => {
     try {
       const res = await fetch(`${API_BASE_URL}search`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
         body: new URLSearchParams({
           query: topic,
           style: comicStyle,
@@ -102,11 +104,11 @@ const LandingPage = () => {
         })
       });
       if (!res.ok) throw new Error('Failed to generate comic.');
-      const html = await res.text();
-      // Parse the HTML response to extract data (simple approach)
-      // In production, use a JSON API for better structure
-      // For now, just show the HTML as a fallback
-      setResult({ html });
+      const data = await res.json();
+      setResult(data.result);
+      setStoryline(data.storyline);
+      setScenes(data.scenes);
+      setImages(data.images);
     } catch (err) {
       setError('Failed to generate comic.');
     } finally {
@@ -270,10 +272,13 @@ const LandingPage = () => {
                   </button>
                 </form>
                 
-                {result && result.html && (
-                  <div className="mt-8">
-                    <div className="bg-white border-2 border-black rounded-lg p-4" dangerouslySetInnerHTML={{ __html: result.html }} />
-                  </div>
+                {result && (
+                  <ComicResult
+                    result={result}
+                    storyline={storyline}
+                    scenes={scenes}
+                    images={images}
+                  />
                 )}
                 {error && (
                   <div className="mt-4 text-center text-red-600 font-bold bg-red-100 border-2 border-red-400 rounded-lg p-3">
