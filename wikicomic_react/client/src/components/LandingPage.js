@@ -15,6 +15,10 @@ import MainForm from './MainForm';
 import Footer from './Footer';
 import { LANGUAGES, TRANSLATIONS } from './constants';
 import ComicResult from './ComicResult';
+import { Modal } from 'react-responsive-modal';
+import 'react-responsive-modal/styles.css';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import QuizComponent from './QuizComponent';
 
 const API_BASE_URL = 'http://localhost:5000/';
 
@@ -42,6 +46,68 @@ const LandingPage = () => {
   const navigate = useNavigate();
   const { setComicStyle: setGlobalComicStyle } = useTheme();
   const t = TRANSLATIONS[currentLanguage];
+  const [showPointsModal, setShowPointsModal] = useState(false);
+  const [showLevelModal, setShowLevelModal] = useState(false);
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [quizScore, setQuizScore] = useState(null);
+
+  // Example data for charts
+  const pointsHistory = [
+    { name: 'Mon', points: 200 },
+    { name: 'Tue', points: 250 },
+    { name: 'Wed', points: 300 },
+    { name: 'Thu', points: 320 },
+    { name: 'Fri', points: 350 },
+  ];
+  const levelData = [
+    { name: 'Level 1', value: 1 },
+    { name: 'Level 2', value: 1 },
+    { name: 'Level 3', value: 1 },
+    { name: 'Level 4', value: userLevel },
+  ];
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+
+  // Example quiz data
+  const quizData = {
+    questions: [
+      {
+        id: 'q1',
+        question: 'Who is the main character of the comic?',
+        options: [
+          { id: 'a', text: 'Donald Trump', correct: true },
+          { id: 'b', text: 'Barack Obama', correct: false },
+          { id: 'c', text: 'Naruto', correct: false },
+          { id: 'd', text: 'Mickey Mouse', correct: false },
+        ],
+      },
+      {
+        id: 'q2',
+        question: 'What is the comic style?',
+        options: [
+          { id: 'a', text: 'Manga', correct: true },
+          { id: 'b', text: 'Noir', correct: false },
+          { id: 'c', text: 'Cartoon', correct: false },
+          { id: 'd', text: 'Indie', correct: false },
+        ],
+      },
+      {
+        id: 'q3',
+        question: 'How many scenes are there?',
+        options: [
+          { id: 'a', text: '3', correct: false },
+          { id: 'b', text: '5', correct: false },
+          { id: 'c', text: '7', correct: true },
+          { id: 'd', text: '10', correct: false },
+        ],
+      },
+    ],
+  };
+
+  const handleQuizComplete = (score) => {
+    setQuizScore(score);
+    setShowQuiz(false);
+    setUserPoints(prev => prev + score * 10);
+  };
 
   const styleOptions = [
     { id: 'Manga', name: 'MANGA MADNESS', color: '#536DFE', bannerColor: '#3D5AFE', description: 'Big eyes & epic expressions!', level: 1, bgImage: mangaBg, textClass: 'font-manga' },
@@ -156,6 +222,12 @@ const LandingPage = () => {
     setShowSuggestions(false);
   };
 
+  // Level progress calculation
+  const xpForLevel = userLevel * 100;
+  const currentXP = userPoints % xpForLevel;
+  const xpToNextLevel = xpForLevel - currentXP;
+  const levelPercent = Math.min(100, Math.round((currentXP / xpForLevel) * 100));
+
   return (
     <div className="min-h-screen overflow-hidden relative">
       <div 
@@ -180,6 +252,8 @@ const LandingPage = () => {
           t={t}
           LANGUAGES={LANGUAGES}
           navigate={navigate}
+          onPointsClick={() => setShowPointsModal(true)}
+          onLevelClick={() => setShowLevelModal(true)}
         />
         <main className="container mx-auto py-8 px-4">
           <div className="max-w-6xl mx-auto">
@@ -278,12 +352,43 @@ const LandingPage = () => {
                 </form>
                 
                 {result && (
-                  <ComicResult
-                    result={result}
-                    storyline={storyline}
-                    scenes={scenes}
-                    images={images}
-                  />
+                  <>
+                    <ComicResult
+                      result={result}
+                      storyline={storyline}
+                      scenes={scenes}
+                      images={images}
+                    />
+                    {!showQuiz && quizScore === null && (
+                      <div className="text-center my-8">
+                        <button
+                          className="px-12 py-6 bg-gradient-to-r from-yellow-400 via-pink-400 to-purple-500 text-white text-3xl font-extrabold rounded-2xl border-4 border-black shadow-2xl hover:scale-110 transition-all duration-200"
+                          onClick={() => setShowQuiz(true)}
+                        >
+                          🎯 Take Quiz!
+                        </button>
+                      </div>
+                    )}
+                    {showQuiz && (
+                      <QuizComponent
+                        quizData={quizData}
+                        onComplete={handleQuizComplete}
+                        comicTopic={result?.title || 'Comic'}
+                      />
+                    )}
+                    {quizScore !== null && (
+                      <div className="text-center my-8">
+                        <div className="text-3xl font-bold mb-2">Quiz Completed!</div>
+                        <div className="text-xl mb-2">Your Score: {quizScore} / {quizData.questions.length}</div>
+                        <button
+                          className="px-6 py-3 bg-green-500 text-white rounded-lg font-bold border-2 border-black shadow-lg hover:scale-105 transition"
+                          onClick={() => setQuizScore(null)}
+                        >
+                          Close
+                        </button>
+                      </div>
+                    )}
+                  </>
                 )}
                 {error && (
                   <div className="mt-4 text-center text-red-600 font-bold bg-red-100 border-2 border-red-400 rounded-lg p-3">
@@ -307,6 +412,65 @@ const LandingPage = () => {
           animation: wiggle 0.5s ease;
         }
       `}</style>
+      {/* Points Modal */}
+      <Modal open={showPointsModal} onClose={() => setShowPointsModal(false)} center styles={{ modal: { maxWidth: 600, width: '90vw', background: 'linear-gradient(135deg, #fffbe7 0%, #ffe0e9 100%)', border: '5px solid #222', borderRadius: '30px', boxShadow: '0 8px 32px rgba(0,0,0,0.25), 0 0 0 8px #ffeb3b', padding: 0 } }}>
+        <div className="relative p-8">
+          <div className="absolute -top-8 left-1/2 transform -translate-x-1/2">
+            <span className="text-5xl">⭐</span>
+          </div>
+          <div className="text-center mb-6">
+            <span className="inline-block bg-gradient-to-r from-yellow-400 to-pink-400 text-white text-3xl font-extrabold py-2 px-8 rounded-lg border-2 border-black shadow-lg" style={{ fontFamily: 'Bangers, Comic Sans MS, Comic, cursive', marginTop: '2rem' }}>
+              Points History
+            </span>
+          </div>
+          <div className="bg-white rounded-xl shadow-2xl p-6 border-2 border-black">
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={pointsHistory}>
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="points" fill="#fbbf24" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </Modal>
+      {/* Level Modal */}
+      <Modal open={showLevelModal} onClose={() => setShowLevelModal(false)} center styles={{ modal: { maxWidth: 600, width: '90vw', background: 'linear-gradient(135deg, #e0e7ff 0%, #ffe0f7 100%)', border: '5px solid #222', borderRadius: '30px', boxShadow: '0 8px 32px rgba(0,0,0,0.25), 0 0 0 8px #a78bfa', padding: 0 } }}>
+        <div className="relative p-8">
+          <div className="absolute -top-8 left-1/2 transform -translate-x-1/2">
+            <span className="text-5xl">🎖️</span>
+          </div>
+          <div className="text-center mb-6">
+            <span className="inline-block bg-gradient-to-r from-purple-500 to-pink-500 text-white text-3xl font-extrabold py-2 px-8 rounded-lg border-2 border-black shadow-lg" style={{ fontFamily: 'Bangers, Comic Sans MS, Comic, cursive', marginTop: '2rem' }}>
+              Level Progress
+            </span>
+          </div>
+          <div className="bg-white rounded-xl shadow-2xl p-6 border-2 border-black">
+            <div className="mb-4 text-xl font-bold text-center">Level {userLevel}</div>
+            <div className="w-full bg-gray-200 rounded-full border-2 border-black h-10 relative mb-4" style={{ boxShadow: '2px 2px 0 #a78bfa' }}>
+              <div className="h-10 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full" style={{ width: `${levelPercent}%`, transition: 'width 0.5s', boxShadow: '2px 2px 0 #a78bfa' }}></div>
+              <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-lg font-bold text-black">{currentXP} / {xpForLevel} XP</div>
+            </div>
+            <div className="text-center text-lg">XP to next level: <span className="font-bold">{xpToNextLevel}</span></div>
+          </div>
+        </div>
+      </Modal>
+      {/* Quiz Modal */}
+      <Modal open={showQuiz} onClose={() => setShowQuiz(false)} center styles={{ modal: { maxWidth: 800, width: '98vw', background: 'linear-gradient(135deg, #fffbe7 0%, #ffe0e9 100%)', border: '5px solid #222', borderRadius: '30px', boxShadow: '0 8px 32px rgba(0,0,0,0.25), 0 0 0 8px #ffeb3b', padding: 0 } }}>
+        <div className="relative p-4">
+          <div className="text-center mb-4">
+            <span className="inline-block bg-gradient-to-r from-yellow-400 to-pink-400 text-white text-3xl font-extrabold py-2 px-8 rounded-lg border-2 border-black shadow-lg" style={{ fontFamily: 'Bangers, Comic Sans MS, Comic, cursive' }}>
+              Quiz Time!
+            </span>
+          </div>
+          <QuizComponent
+            quizData={quizData}
+            onComplete={handleQuizComplete}
+            comicTopic={result?.title || 'Comic'}
+          />
+        </div>
+      </Modal>
     </div>
   );
 };

@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useTheme } from '../contexts/ThemeContext';
 import QuizComponent from './QuizComponent';
+import { Modal } from 'react-responsive-modal';
+import 'react-responsive-modal/styles.css';
 
 const API_BASE_URL = 'http://localhost:5000';
 
@@ -18,6 +20,7 @@ const ComicViewer = () => {
   const [achievementUnlocked, setAchievementUnlocked] = useState(false);
   const [userPoints, setUserPoints] = useState(375);
   const [showQuiz, setShowQuiz] = useState(false);
+  const [quizScore, setQuizScore] = useState(null);
   const { setComicStyle, themeStyles, currentTheme } = useTheme();
 
   useEffect(() => {
@@ -121,30 +124,51 @@ const ComicViewer = () => {
     }
   };
 
+  // Utility to shuffle array
+  function shuffle(array) {
+    let currentIndex = array.length, randomIndex;
+    while (currentIndex !== 0) {
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex--;
+      [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+    }
+    return array;
+  }
+
   // Prepare quiz data from comic key points
   const generateQuizData = () => {
     const allKeyPoints = comic.scenes.flatMap(scene => scene.dialogue ? scene.dialogue.split('\n').filter(point => point.trim()) : []);
-    
+    // Gather all unique words/phrases for distractors
+    const allWords = allKeyPoints.flatMap(point => point.split(' ')).filter(w => w.length > 3);
     // Create mock quiz questions based on key points
     const quiz = {
       title: `${comic.title} Quiz`,
       description: `Test your knowledge about ${comic.title}!`,
       questions: allKeyPoints.map((point, index) => {
         // Convert key point into a question
-        const question = point.replace(/\bis\b|\bare\b/, "_____ ");
+        const words = point.split(' ');
+        const answer = words.slice(-3).join(' ');
+        // Generate 3 random distractors
+        let distractors = [];
+        while (distractors.length < 3) {
+          const candidate = shuffle(allWords).slice(0, 3).join(' ');
+          if (candidate !== answer && !distractors.includes(candidate)) {
+            distractors.push(candidate);
+          }
+        }
+        const options = shuffle([
+          { id: 'a', text: answer, correct: true },
+          { id: 'b', text: distractors[0], correct: false },
+          { id: 'c', text: distractors[1], correct: false },
+          { id: 'd', text: distractors[2], correct: false }
+        ]);
         return {
           id: index + 1,
-          question: question,
-          options: [
-            { id: 'a', text: point.split(' ').slice(-3).join(' '), correct: true },
-            { id: 'b', text: "Not this option", correct: false },
-            { id: 'c', text: "Nor this one", correct: false },
-            { id: 'd', text: "Definitely not this", correct: false }
-          ]
+          question: point.replace(/\bis\b|\bare\b/, '_____ '),
+          options
         };
       }).slice(0, 5) // Limit to 5 questions
     };
-    
     return quiz;
   };
   
@@ -292,6 +316,44 @@ const ComicViewer = () => {
           }
         `}</style>
       </div>
+      <div className="absolute top-8 right-8 z-20">
+        {!showQuiz && quizScore === null && (
+          <button
+            className={`px-6 py-3 rounded-full ${buttonComic} text-lg flex items-center gap-2`}
+            style={{ fontFamily: comicFont }}
+            onClick={handleStartQuiz}
+          >
+            <span role="img" aria-label="quiz">📝</span> Take Quiz
+          </button>
+        )}
+      </div>
+      <Modal open={showQuiz} onClose={() => setShowQuiz(false)} center styles={{ modal: { maxWidth: 800, width: '98vw', background: 'linear-gradient(135deg, #fffbe7 0%, #ffe0e9 100%)', border: '5px solid #222', borderRadius: '30px', boxShadow: '0 8px 32px rgba(0,0,0,0.25), 0 0 0 8px #ffeb3b', padding: 0 } }}>
+        <div className="relative p-4">
+          <div className="text-center mb-4">
+            <span className="inline-block bg-gradient-to-r from-yellow-400 to-pink-400 text-white text-3xl font-extrabold py-2 px-8 rounded-lg border-2 border-black shadow-lg" style={{ fontFamily: 'Bangers, Comic Sans MS, Comic, cursive' }}>
+              Quiz Time!
+            </span>
+          </div>
+          <QuizComponent
+            quizData={generateQuizData()}
+            onComplete={(score) => { setQuizScore(score); setShowQuiz(false); setUserPoints(prev => prev + (score * 10)); }}
+            comicTopic={comic.title}
+          />
+        </div>
+      </Modal>
+      {quizScore !== null && (
+        <div className="text-center my-8">
+          <div className="text-3xl font-bold mb-2">Quiz Completed!</div>
+          <div className="text-xl mb-2">Your Score: {quizScore} / {generateQuizData().questions.length}</div>
+          <button
+            className="px-6 py-3 bg-green-500 text-white rounded-lg font-bold border-2 border-black shadow-lg hover:scale-105 transition"
+            onClick={() => setQuizScore(null)}
+            style={{ fontFamily: comicFont }}
+          >
+            Close
+          </button>
+        </div>
+      )}
     </div>
   );
 };

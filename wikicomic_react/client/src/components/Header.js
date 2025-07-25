@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Header = ({ userPoints, userLevel, currentLanguage, showLanguageMenu, setShowLanguageMenu, handleLanguageChange, t, LANGUAGES, navigate }) => (
+const Header = ({ userPoints, userLevel, currentLanguage, showLanguageMenu, setShowLanguageMenu, handleLanguageChange, t, LANGUAGES, navigate, onPointsClick, onLevelClick }) => (
   <header className="relative overflow-visible" style={{ 
     backgroundColor: t.bannerColor || '#3D5AFE',
     borderBottom: '3px solid black',
@@ -51,16 +51,24 @@ const Header = ({ userPoints, userLevel, currentLanguage, showLanguageMenu, setS
             </div>
           </button>
           {/* Points Display */}
-          <div className="bg-yellow-300 border-2 border-black rounded-full px-3 py-1 text-black font-bold shadow-lg transform hover:scale-105 transition-transform" style={{ boxShadow: '3px 3px 0 rgba(0,0,0,0.8)' }}>
+          <button
+            onClick={onPointsClick}
+            className="bg-yellow-300 border-2 border-black rounded-full px-3 py-1 text-black font-bold shadow-lg transform hover:scale-105 transition-transform focus:outline-none"
+            style={{ boxShadow: '3px 3px 0 rgba(0,0,0,0.8)' }}
+          >
             <div className="flex items-center">
               <svg className="mr-1" width="16" height="16" viewBox="0 0 24 24" fill="orange" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="orange" stroke="currentColor" />
               </svg>
               <span>{userPoints} {t.points}</span>
             </div>
-          </div>
+          </button>
           {/* Level Display */}
-          <div className="bg-purple-500 border-2 border-black rounded-full px-3 py-1 text-white font-bold shadow-lg" style={{ boxShadow: '3px 3px 0 rgba(0,0,0,0.8)' }}>
+          <button
+            onClick={onLevelClick}
+            className="bg-purple-500 border-2 border-black rounded-full px-3 py-1 text-white font-bold shadow-lg focus:outline-none"
+            style={{ boxShadow: '3px 3px 0 rgba(0,0,0,0.8)' }}
+          >
             <div className="flex items-center">
               <svg className="mr-1" width="16" height="16" viewBox="0 0 24 24" fill="gold" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="8" r="6" fill="gold" stroke="currentColor" />
@@ -68,7 +76,7 @@ const Header = ({ userPoints, userLevel, currentLanguage, showLanguageMenu, setS
               </svg>
               <span>{t.level} {userLevel}</span>
             </div>
-          </div>
+          </button>
           {/* Language Selector */}
           <div className="language-selector relative" style={{ zIndex: 9999 }}>
             <button
