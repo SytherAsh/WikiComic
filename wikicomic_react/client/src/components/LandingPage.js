@@ -109,6 +109,10 @@ const LandingPage = () => {
       setStoryline(data.storyline);
       setScenes(data.scenes);
       setImages(data.images);
+      // Automatically navigate to the flipbook view for the new comic
+      if (data.result && data.result.title) {
+        navigate(`/comic/${encodeURIComponent(data.result.title)}`);
+      }
     } catch (err) {
       setError('Failed to generate comic.');
     } finally {
