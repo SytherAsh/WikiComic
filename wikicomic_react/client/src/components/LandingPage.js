@@ -29,6 +29,7 @@ const LandingPage = () => {
   const [complexity, setComplexity] = useState(50);
   const [currentLanguage, setCurrentLanguage] = useState('en');
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
+  const [length, setLength] = useState('medium');
   const navigate = useNavigate();
   const { setComicStyle: setGlobalComicStyle } = useTheme();
   const t = TRANSLATIONS[currentLanguage];
@@ -76,7 +77,7 @@ const LandingPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Add your submit logic here
+    // Add your submit logic here, use the selected length
   };
 
   return (
@@ -129,6 +130,22 @@ const LandingPage = () => {
                   error={error}
                   t={t}
                 />
+                <div className="flex justify-center gap-4 my-4">
+                  {['short', 'medium', 'long'].map((len) => (
+                    <button
+                      key={len}
+                      type="button"
+                      onClick={() => setLength(len)}
+                      className={`px-6 py-2 rounded-full font-bold border-2 border-black transition-all duration-150 ${
+                        length === len
+                          ? 'bg-blue-600 text-white scale-105 shadow-lg'
+                          : 'bg-white text-blue-600 hover:bg-blue-100'
+                      }`}
+                    >
+                      {len.charAt(0).toUpperCase() + len.slice(1)}
+                    </button>
+                  ))}
+                </div>
                 <RecentTopics
                   recentTopics={recentTopics}
                   setTopic={setTopic}
