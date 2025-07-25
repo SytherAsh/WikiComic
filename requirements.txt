@@ -1,0 +1,7 @@
+Flask
+wikipedia
+groq
+requests
+Pillow
+python-dotenv
+google-genai
