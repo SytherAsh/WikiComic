@@ -15,6 +15,8 @@ import MainForm from './MainForm';
 import Footer from './Footer';
 import { LANGUAGES, TRANSLATIONS } from './constants';
 
+const API_BASE_URL = 'http://localhost:5000/';
+
 const LandingPage = () => {
   const [topic, setTopic] = useState('');
   const [complexityLevel, setComplexityLevel] = useState('Elementary');
@@ -30,6 +32,8 @@ const LandingPage = () => {
   const [currentLanguage, setCurrentLanguage] = useState('en');
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
   const [length, setLength] = useState('medium');
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const navigate = useNavigate();
   const { setComicStyle: setGlobalComicStyle } = useTheme();
   const t = TRANSLATIONS[currentLanguage];
@@ -80,6 +84,42 @@ const LandingPage = () => {
     // Add your submit logic here, use the selected length
   };
 
+  // Fetch suggestions from Flask backend
+  const fetchSuggestions = async (query) => {
+    if (!query || query.length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    try {
+      const res = await fetch(`${API_BASE_URL}suggest?query=${encodeURIComponent(query)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setSuggestions(data);
+        setShowSuggestions(true);
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    } catch (err) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  // Handler for input change
+  const handleInputChange = (e) => {
+    setTopic(e.target.value);
+    fetchSuggestions(e.target.value);
+  };
+
+  // Handler for suggestion selection
+  const handleSuggestionSelect = (suggestion) => {
+    setTopic(suggestion);
+    setSuggestions([]);
+    setShowSuggestions(false);
+  };
+
   return (
     <div className="min-h-screen overflow-hidden relative">
       <div 
@@ -126,9 +166,12 @@ const LandingPage = () => {
                 </h1>
                 <MainForm
                   topic={topic}
-                  setTopic={setTopic}
                   error={error}
                   t={t}
+                  suggestions={suggestions}
+                  showSuggestions={showSuggestions}
+                  onInputChange={handleInputChange}
+                  onSuggestionSelect={handleSuggestionSelect}
                 />
                 <div className="flex justify-center gap-4 my-4">
                   {['short', 'medium', 'long'].map((len) => (
