@@ -1,14 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import ComicFlipbook from './ComicFlipbook';
-
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://wiki-comic-ash.vercel.app';
-
-function getImageUrl(image) {
-  if (!image) return '/placeholder-comic.png';
-  if (image.startsWith('http')) return image;
-  // Encode spaces and special characters
-  return API_BASE_URL + encodeURI(image);
-}
+import { API_BASE_URL, getImageUrl } from '../config/routes';
 
 const PreviousComics = () => {
   const [comics, setComics] = useState([]);
@@ -21,11 +13,15 @@ const PreviousComics = () => {
       setLoading(true);
       setError('');
       try {
-        const res = await fetch(`${API_BASE_URL}comics`);
+        console.log('PreviousComics: Fetching from:', `${API_BASE_URL}/comics`);
+        const res = await fetch(`${API_BASE_URL}/comics`);
+        console.log('PreviousComics: Response status:', res.status);
         if (!res.ok) throw new Error('Failed to fetch comics');
         const data = await res.json();
+        console.log('PreviousComics: Data received:', data);
         setComics(data.comics || []);
       } catch (err) {
+        console.error('PreviousComics: Error:', err);
         setError('Failed to load previous comics.');
       } finally {
         setLoading(false);

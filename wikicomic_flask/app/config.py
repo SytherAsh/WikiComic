@@ -12,3 +12,4 @@ class Config:
     HF_TOKEN = os.getenv('HF_TOKEN')
     # Add more as needed
     GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
+    CORS_ORIGINS = os.getenv('CORS_ORIGINS', '*').split(',')

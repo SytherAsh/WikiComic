@@ -19,8 +19,7 @@ import { Modal } from 'react-responsive-modal';
 import 'react-responsive-modal/styles.css';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import QuizComponent from './QuizComponent';
-
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://wiki-comic-ash.vercel.app/';
+import { API_BASE_URL } from '../config/routes';
 
 const LandingPage = () => {
   const [topic, setTopic] = useState('');
@@ -194,16 +193,22 @@ const LandingPage = () => {
       return;
     }
     try {
-      const res = await fetch(`${API_BASE_URL}suggest?query=${encodeURIComponent(query)}`);
+      console.log('Fetching suggestions for query:', query);
+      console.log('Suggest URL:', `${API_BASE_URL}/suggest?query=${encodeURIComponent(query)}`);
+      const res = await fetch(`${API_BASE_URL}/suggest?query=${encodeURIComponent(query)}`);
+      console.log('Suggest response status:', res.status);
       if (res.ok) {
         const data = await res.json();
+        console.log('Suggestions received:', data);
         setSuggestions(data);
         setShowSuggestions(true);
       } else {
+        console.log('Suggest response not ok:', res.status);
         setSuggestions([]);
         setShowSuggestions(false);
       }
     } catch (err) {
+      console.error('Error fetching suggestions:', err);
       setSuggestions([]);
       setShowSuggestions(false);
     }

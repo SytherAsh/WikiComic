@@ -1,5 +1,5 @@
 wikienv
 wikicomic_flask/.env
 wikicomic_react/client/node_modules
-wikicomic_react/server/node_modules
-wikicomic_react/server/.env
+wikicomic_vercel_ready/.env
+wikicomic_react/.env

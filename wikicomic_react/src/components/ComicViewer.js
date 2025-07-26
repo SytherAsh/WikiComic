@@ -5,8 +5,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import QuizComponent from './QuizComponent';
 import { Modal } from 'react-responsive-modal';
 import 'react-responsive-modal/styles.css';
-
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://wiki-comic-ash.vercel.app';
+import { API_BASE_URL, getImageUrl } from '../config/routes';
 
 const ComicViewer = () => {
   const { id } = useParams();
@@ -256,7 +255,7 @@ const ComicViewer = () => {
           <h1 className="text-5xl font-extrabold mb-6 text-center text-blue-900 drop-shadow-lg tracking-wider" style={{ fontFamily: comicFont, letterSpacing: '2px', textShadow: '2px 2px 0 #fff, 4px 4px 0 #000' }}>{comic.title}</h1>
           <div className="bg-white border-4 border-black rounded-xl shadow-xl flex items-center justify-center mb-8" style={{ minHeight: 500, minWidth: 500, maxWidth: 700 }}>
             <img
-              src={scene.image.startsWith('http') ? scene.image : `${API_BASE_URL}${scene.image}`}
+              src={getImageUrl(scene.image)}
               alt={`Scene ${currentScene + 1}`}
               className="w-full h-[500px] object-contain rounded-xl"
               style={{ background: '#fff' }}
@@ -288,7 +287,7 @@ const ComicViewer = () => {
             {comic.scenes.map((s, idx) => (
               <img
                 key={idx}
-                src={s.image.startsWith('http') ? s.image : `${API_BASE_URL}${s.image}`}
+                src={getImageUrl(s.image)}
                 alt={`Thumbnail ${idx + 1}`}
                 className={`w-20 h-20 object-cover rounded-lg border-4 border-black cursor-pointer ${currentScene === idx ? 'border-blue-500 scale-110' : 'border-gray-300'} transition-transform`}
                 onClick={() => setCurrentScene(idx)}

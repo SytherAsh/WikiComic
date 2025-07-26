@@ -2,15 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
-
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://wiki-comic-ash.vercel.app';
-
-function getImageUrl(image) {
-  if (!image) return '/placeholder-comic.png';
-  if (image.startsWith('http')) return image;
-  // Encode spaces and special characters
-  return API_BASE_URL + encodeURI(image);
-}
+import { API_BASE_URL, getImageUrl } from '../config/routes';
 
 const ComicsGallery = () => {
   const [comics, setComics] = useState([]);
@@ -27,13 +19,16 @@ const ComicsGallery = () => {
     try {
       setLoading(true);
       setError(null);
+      console.log('Fetching comics from:', `${API_BASE_URL}/comics`);
       const response = await axios.get(`${API_BASE_URL}/comics`);
+      console.log('Comics response:', response.data);
       if (response.data && response.data.comics) {
         setComics(response.data.comics);
       } else {
         throw new Error('Invalid response format');
       }
     } catch (err) {
+      console.error('Error fetching comics:', err);
       setError('Failed to fetch comics. Please try again.');
     } finally {
       setLoading(false);

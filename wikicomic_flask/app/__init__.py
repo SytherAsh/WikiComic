@@ -6,8 +6,8 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # Enable CORS for all routes
-    CORS(app)
+    # Enable CORS for all routes, using environment-based origins
+    CORS(app, origins=app.config['CORS_ORIGINS'])
 
     # Register Blueprints
     from .routes.home import home_bp
