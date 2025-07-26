@@ -6,6 +6,7 @@ from PIL import Image, ImageEnhance
 from google import genai
 from google.genai import types
 import re
+from ..database import db_manager
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +59,6 @@ class ComicImageGenerator:
             raise ValueError("GEMINI_API_KEY environment variable is not set")
 
         self.client = genai.Client(api_key=self.api_key)
-        self.static_base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'static', 'comic'))
 
     def _enhance_prompt(self, scene_prompt, style="Manga", dialogue=None):
         style_settings = self.STYLE_SETTINGS.get(style, self.STYLE_SETTINGS['Manga'])
@@ -125,7 +125,10 @@ class ComicImageGenerator:
             logger.warning(f"Image post-processing failed: {e}")
         return image
 
-    def generate_comic_image(self, prompt, output_path, style="Manga", dialogue=None):
+    def generate_comic_image(self, prompt, style="Manga", dialogue=None):
+        """
+        Generate a comic image and return the image data as bytes
+        """
         full_prompt = self._enhance_prompt(prompt, style, dialogue)
 
         try:
@@ -142,9 +145,12 @@ class ComicImageGenerator:
                     image = Image.open(BytesIO(part.inline_data.data))
                     image = self._post_process_image(image)
 
-                    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-                    image.save(output_path, format='PNG', quality=95)
-                    return True
+                    # Convert to bytes
+                    img_buffer = BytesIO()
+                    image.save(img_buffer, format='PNG', quality=95)
+                    img_buffer.seek(0)
+                    
+                    return img_buffer.getvalue()
                 elif hasattr(part, "text") and part.text:
                     logger.info(f"Gemini Text Output: {part.text}")
 
@@ -152,33 +158,69 @@ class ComicImageGenerator:
         except Exception as e:
             logger.error(f"Error generating image with Gemini: {e}")
 
-        return False
+        return None
 
     def generate_all_images(self, title, scenes, style="Manga"):
-        folder_name = sanitize_filename(title)
-        comic_dir = os.path.join(self.static_base_dir, folder_name)
-        os.makedirs(comic_dir, exist_ok=True)
-
+        """
+        Generate all images for a comic and store them in MongoDB
+        """
         scene_data = []
+        stored_image_ids = []
 
         for idx, scene in enumerate(scenes):
             prompt = scene.get("prompt", f"Scene {idx+1}")
             dialogue = scene.get("dialogue", "")
-            image_filename = f"scene_{idx+1}.png"
-            json_filename = f"scene_{idx+1}.json"
-            image_path = os.path.join(comic_dir, image_filename)
-            json_path = os.path.join(comic_dir, json_filename)
-
-            success = self.generate_comic_image(prompt, image_path, style, dialogue)
-            if success:
-                with open(json_path, 'w') as jf:
-                    json.dump({"prompt": prompt, "dialogue": dialogue}, jf, indent=4)
-
-                scene_data.append({
-                    "image": f"/static/comic/{folder_name}/{image_filename}",
-                    "dialogue": dialogue
-                })
+            
+            logger.info(f"Generating image for scene {idx+1}: {prompt[:50]}...")
+            
+            # Generate image
+            image_data = self.generate_comic_image(prompt, style, dialogue)
+            
+            if image_data:
+                try:
+                    # Store image in MongoDB
+                    image_id = db_manager.store_image(
+                        image_data=image_data,
+                        comic_title=title,
+                        scene_number=idx + 1,
+                        scene_text=dialogue,
+                        metadata={
+                            "prompt": prompt,
+                            "style": style,
+                            "scene_index": idx
+                        }
+                    )
+                    
+                    stored_image_ids.append(image_id)
+                    
+                    scene_data.append({
+                        "image_id": image_id,
+                        "image_url": f"/api/images/{image_id}",
+                        "dialogue": dialogue,
+                        "prompt": prompt,
+                        "scene_number": idx + 1
+                    })
+                    
+                    logger.info(f"✅ Scene {idx+1} stored with ID: {image_id}")
+                    
+                except Exception as e:
+                    logger.error(f"❌ Failed to store scene {idx+1}: {e}")
             else:
-                logger.error(f"Failed to generate image for scene {idx+1}")
+                logger.error(f"❌ Failed to generate image for scene {idx+1}")
+
+        # Store comic metadata
+        if scene_data:
+            try:
+                comic_id = db_manager.store_comic(title, scene_data, style)
+                logger.info(f"✅ Comic '{title}' stored with ID: {comic_id}")
+                return scene_data
+            except Exception as e:
+                logger.error(f"❌ Failed to store comic metadata: {e}")
+                # Clean up stored images if comic metadata storage fails
+                for image_id in stored_image_ids:
+                    try:
+                        db_manager.delete_comic(image_id)
+                    except:
+                        pass
 
         return scene_data
