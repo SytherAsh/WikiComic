@@ -30,10 +30,16 @@ const MainForm = ({ topic, error, t, suggestions = [], showSuggestions = false, 
           </ul>
         )}
       </div>
+      {/* Helpful message when suggestions are available */}
+      {showSuggestions && suggestions.length > 0 && (
+        <div className="mt-2 text-center text-blue-600 font-medium">
+          💡 Select from the suggestions above for better results!
+        </div>
+      )}
       {/* Error Message */}
       {error && (
         <div className="mt-4 text-center text-red-600 font-bold bg-red-100 border-2 border-red-400 rounded-lg p-3">
-          {t.errorGenerating}
+          {error}
         </div>
       )}
     </>

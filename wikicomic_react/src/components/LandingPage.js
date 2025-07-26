@@ -173,6 +173,13 @@ const LandingPage = () => {
       });
       if (!res.ok) throw new Error('Failed to generate comic.');
       const data = await res.json();
+      
+      // Check if the backend returned an error message
+      if (data.error) {
+        setError(data.error);
+        return;
+      }
+      
       setResult(data.result);
       setStoryline(data.storyline);
       setScenes(data.scenes);
