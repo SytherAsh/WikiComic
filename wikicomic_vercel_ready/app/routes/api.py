@@ -113,17 +113,91 @@ def health_check():
     Health check endpoint
     """
     try:
-        # Test MongoDB connection
-        db_manager.client.admin.command('ping')
-        return jsonify({
-            "status": "healthy",
-            "database": "connected",
-            "message": "All systems operational"
-        })
+        # Check MongoDB connection status
+        if db_manager.connected:
+            # Test actual connection
+            try:
+                db_manager.client.admin.command('ping')
+                return jsonify({
+                    "status": "healthy",
+                    "database": "connected",
+                    "message": "All systems operational",
+                    "mongodb_uri_configured": bool(db_manager.client),
+                    "collections_ready": bool(db_manager.db)
+                })
+            except Exception as e:
+                return jsonify({
+                    "status": "unhealthy",
+                    "database": "connection_failed",
+                    "error": str(e),
+                    "mongodb_uri_configured": bool(db_manager.client),
+                    "collections_ready": False
+                }), 500
+        else:
+            return jsonify({
+                "status": "unhealthy",
+                "database": "not_configured",
+                "error": "MongoDB URI not configured or connection failed",
+                "mongodb_uri_configured": False,
+                "collections_ready": False,
+                "help": "Please set MONGODB_URI environment variable with your MongoDB Atlas connection string"
+            }), 500
+            
     except Exception as e:
         logger.error(f"Health check failed: {e}")
         return jsonify({
             "status": "unhealthy",
-            "database": "disconnected",
+            "database": "error",
+            "error": str(e),
+            "mongodb_uri_configured": False,
+            "collections_ready": False
+        }), 500 
+
+@api_bp.route('/debug', methods=['GET'])
+def debug_info():
+    """
+    Debug endpoint to check configuration
+    """
+    try:
+        from flask import current_app
+        
+        # Get configuration info (without exposing sensitive data)
+        config_info = {
+            "mongodb_uri_configured": bool(current_app.config.get('MONGODB_URI')),
+            "mongodb_uri_length": len(current_app.config.get('MONGODB_URI', '')),
+            "mongodb_db_name": current_app.config.get('MONGODB_DB_NAME'),
+            "mongodb_collections": {
+                "images": current_app.config.get('MONGODB_COLLECTION_IMAGES'),
+                "comics": current_app.config.get('MONGODB_COLLECTION_COMICS'),
+                "scenes": current_app.config.get('MONGODB_COLLECTION_SCENES')
+            },
+            "database_connected": db_manager.connected,
+            "api_keys_configured": {
+                "groq": bool(current_app.config.get('GROQ_API_KEY')),
+                "gemini": bool(current_app.config.get('GEMINI_API_KEY')),
+                "google": bool(current_app.config.get('GOOGLE_API_KEY')),
+                "hf_token": bool(current_app.config.get('HF_TOKEN'))
+            },
+            "cors_origins": current_app.config.get('CORS_ORIGINS'),
+            "environment": {
+                "debug": current_app.config.get('DEBUG', False),
+                "secret_key_configured": bool(current_app.config.get('SECRET_KEY'))
+            }
+        }
+        
+        return jsonify({
+            "status": "debug_info",
+            "configuration": config_info,
+            "database_status": {
+                "connected": db_manager.connected,
+                "client_exists": bool(db_manager.client),
+                "db_exists": bool(db_manager.db)
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Debug endpoint error: {e}")
+        return jsonify({
+            "status": "error",
             "error": str(e)
         }), 500 

@@ -7,7 +7,7 @@ from typing import Optional, List, Dict, Any
 from bson import ObjectId
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
-from pymongo.errors import ConnectionFailure, OperationFailure
+from pymongo.errors import ConnectionFailure, OperationFailure, ServerSelectionTimeoutError
 from gridfs import GridFS
 from PIL import Image
 import json
@@ -22,6 +22,7 @@ class MongoDBManager:
         self.images_collection = None
         self.comics_collection = None
         self.scenes_collection = None
+        self.connected = False
         
         if app is not None:
             self.init_app(app)
@@ -29,10 +30,20 @@ class MongoDBManager:
     def init_app(self, app):
         """Initialize MongoDB connection with Flask app"""
         try:
+            # Check if MongoDB URI is configured
+            mongodb_uri = app.config.get('MONGODB_URI')
+            if not mongodb_uri:
+                logger.error("❌ MONGODB_URI environment variable is not set")
+                logger.info("💡 Please set up MongoDB Atlas and configure MONGODB_URI in your environment variables")
+                self.connected = False
+                return
+            
             # Connect to MongoDB
             self.client = MongoClient(
-                app.config['MONGODB_URI'],
-                server_api=ServerApi('1')
+                mongodb_uri,
+                server_api=ServerApi('1'),
+                serverSelectionTimeoutMS=10000,  # 10 second timeout
+                connectTimeoutMS=10000
             )
             
             # Test connection
@@ -50,12 +61,24 @@ class MongoDBManager:
             # Create indexes for better performance
             self._create_indexes()
             
-        except ConnectionFailure as e:
+            self.connected = True
+            
+        except (ConnectionFailure, ServerSelectionTimeoutError) as e:
             logger.error(f"❌ MongoDB connection failed: {e}")
-            raise
+            logger.info("💡 Please check your MONGODB_URI and ensure MongoDB Atlas is accessible")
+            self.connected = False
+            # Don't raise the exception - allow the app to start without MongoDB
         except Exception as e:
             logger.error(f"❌ MongoDB initialization error: {e}")
-            raise
+            self.connected = False
+            # Don't raise the exception - allow the app to start without MongoDB
+    
+    def _check_connection(self):
+        """Check if MongoDB is connected before performing operations"""
+        if not self.connected:
+            logger.error("❌ MongoDB is not connected. Please check your configuration.")
+            return False
+        return True
     
     def _create_indexes(self):
         """Create database indexes for better performance"""
@@ -92,6 +115,9 @@ class MongoDBManager:
         Returns:
             ObjectId of the stored image
         """
+        if not self._check_connection():
+            raise ConnectionError("MongoDB is not connected")
+            
         try:
             # Prepare metadata
             file_metadata = {
@@ -140,6 +166,10 @@ class MongoDBManager:
         Returns:
             Dictionary with image data and metadata
         """
+        if not self._check_connection():
+            logger.error("❌ Cannot retrieve image: MongoDB is not connected")
+            return None
+            
         try:
             # Get file from GridFS
             grid_out = self.fs.get(ObjectId(image_id))
@@ -172,6 +202,9 @@ class MongoDBManager:
         Returns:
             ObjectId of the stored comic
         """
+        if not self._check_connection():
+            raise ConnectionError("MongoDB is not connected")
+            
         try:
             comic_doc = {
                 "title": title,
@@ -192,6 +225,10 @@ class MongoDBManager:
     
     def get_comic(self, comic_id: str) -> Optional[Dict[str, Any]]:
         """Get comic by ID"""
+        if not self._check_connection():
+            logger.error("❌ Cannot retrieve comic: MongoDB is not connected")
+            return None
+            
         try:
             return self.comics_collection.find_one({"_id": ObjectId(comic_id)})
         except Exception as e:
@@ -200,6 +237,10 @@ class MongoDBManager:
     
     def get_all_comics(self) -> List[Dict[str, Any]]:
         """Get all comics with their scenes and images"""
+        if not self._check_connection():
+            logger.error("❌ Cannot retrieve comics: MongoDB is not connected")
+            return []
+            
         try:
             comics = []
             for comic in self.comics_collection.find().sort("created_at", -1):
@@ -230,6 +271,10 @@ class MongoDBManager:
     
     def get_comic_by_title(self, title: str) -> Optional[Dict[str, Any]]:
         """Get comic by title"""
+        if not self._check_connection():
+            logger.error("❌ Cannot retrieve comic: MongoDB is not connected")
+            return None
+            
         try:
             comic = self.comics_collection.find_one({"title": title})
             if comic:
@@ -242,6 +287,10 @@ class MongoDBManager:
     
     def delete_comic(self, comic_id: str) -> bool:
         """Delete comic and all associated images"""
+        if not self._check_connection():
+            logger.error("❌ Cannot delete comic: MongoDB is not connected")
+            return False
+            
         try:
             # Get comic to find associated images
             comic = self.get_comic(comic_id)

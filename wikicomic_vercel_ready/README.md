@@ -1,127 +1,55 @@
-# WikiComic - Vercel Backend
+# WikiComic - AI-Powered Comic Generator
 
-A Flask-based backend API for generating comics from Wikipedia articles using AI. This version is optimized for deployment on Vercel.
+A Flask application that generates comics from Wikipedia articles using AI.
 
 ## Features
 
-- **Wikipedia Integration**: Extract content from Wikipedia articles
-- **AI Story Generation**: Generate comic storylines using Groq LLM
-- **AI Image Generation**: Create comic panels using Google Gemini
-- **MongoDB Storage**: Store comics and images in MongoDB GridFS
-- **RESTful API**: Clean API endpoints for frontend integration
-- **CORS Support**: Configured for cross-origin requests
-- **Multiple Comic Styles**: Manga, Western, Minimalist, Cartoon, Noir, Indie
+- Generate comics from Wikipedia articles
+- Multiple comic styles (Manga, Western, Minimalist, Cartoon, Noir, Indie)
+- AI-powered image generation using Gemini
+- MongoDB storage for comics and images
+- RESTful API endpoints
+- Modern web interface
 
-## Tech Stack
+## Quick Setup for Vercel Deployment
 
-- **Backend**: Flask (Python)
-- **Database**: MongoDB with GridFS
-- **AI Services**: 
-  - Groq (LLaMA 3.1) for story generation
-  - Google Gemini for image generation
-- **Deployment**: Vercel
-- **CORS**: Flask-CORS
+### 1. MongoDB Atlas Setup
 
-## Project Structure
+1. **Create MongoDB Atlas Account**
+   - Go to [MongoDB Atlas](https://www.mongodb.com/atlas)
+   - Sign up for a free account
+   - Create a new cluster (M0 Free tier is sufficient)
+
+2. **Get Connection String**
+   - In Atlas dashboard, click "Connect"
+   - Choose "Connect your application"
+   - Copy the connection string
+   - Replace `<password>` with your database user password
+   - Replace `<dbname>` with your database name (e.g., `Wikicomic`)
+
+### 2. Vercel Environment Variables
+
+In your Vercel project dashboard, go to Settings → Environment Variables and add:
 
 ```
-wikicomic_vercel_ready/
-├── api/
-│   └── index.py              # Vercel serverless function entry point
-├── app/
-│   ├── __init__.py           # Flask app factory
-│   ├── config.py             # Configuration and environment variables
-│   ├── database.py           # MongoDB connection and operations
-│   ├── models/
-│   │   └── gemini.py         # Gemini AI model utilities
-│   ├── routes/
-│   │   ├── api.py            # API endpoints for images and comics
-│   │   ├── comics.py         # Comic listing endpoints
-│   │   ├── home.py           # Home page route
-│   │   ├── input.py          # Input handling routes
-│   │   └── search.py         # Search and comic generation routes
-│   ├── static/
-│   │   └── comic/            # Static comic assets
-│   ├── templates/
-│   │   ├── home.html         # Home page template
-│   │   └── search.html       # Search page template
-│   └── utils/
-│       ├── imagegen.py       # Image generation utilities
-│       ├── storygen.py       # Story generation utilities
-│       ├── test_gen.py       # Testing utilities
-│       └── wikiextract.py    # Wikipedia content extraction
-├── instance/                 # Instance-specific files
-├── env_example.txt           # Environment variables template
-├── migrate_to_mongo.py       # Database migration script
-├── requirements.txt          # Python dependencies
-├── run.py                    # Local development server
-├── vercel.json              # Vercel configuration
-└── README.md                # This file
-```
-
-## Environment Variables
-
-Create a `.env` file in the root directory with the following variables:
-
-```env
-# Flask Configuration
-SECRET_KEY=your-super-secret-key-change-this-in-production
-DEBUG=False
-
-# MongoDB Configuration
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/Wikicomic?retryWrites=true&w=majority
 MONGODB_DB_NAME=Wikicomic
 MONGODB_COLLECTION_IMAGES=Images
 MONGODB_COLLECTION_COMICS=Comics
 MONGODB_COLLECTION_SCENES=Scenes
-
-# API Keys (Required)
-GROQ_API_KEY=your-groq-api-key-here
-GEMINI_API_KEY=your-gemini-api-key-here
-
-# Optional API Keys
-HF_TOKEN=your-huggingface-token-here
-GOOGLE_API_KEY=your-google-api-key-here
-
-# CORS Configuration (Production)
-CORS_ORIGINS=https://your-frontend-domain.vercel.app,https://your-custom-domain.com
-
-# Image Storage Configuration
-MAX_IMAGE_SIZE=10485760
-ALLOWED_IMAGE_TYPES=image/png,image/jpeg,image/jpg,image/webp
-
-# Comic Generation Settings
-DEFAULT_COMIC_STYLE=Manga
-DEFAULT_COMIC_LENGTH=medium
-MAX_SCENES=10
-
-# Image Generation Settings
-IMAGE_FORMAT=base64
-IMAGE_QUALITY=95
+GROQ_API_KEY=your-groq-api-key
+GEMINI_API_KEY=your-gemini-api-key
+SECRET_KEY=your-super-secret-key
+CORS_ORIGINS=https://your-frontend-domain.vercel.app
 ```
 
-## API Endpoints
+### 3. Deploy to Vercel
 
-### Core Endpoints
+1. Push your code to GitHub
+2. Connect your repository to Vercel
+3. Deploy with the environment variables set
 
-- `GET /` - Home page
-- `GET /search` - Search page
-- `POST /search` - Generate comic from Wikipedia article
-- `GET /suggest` - Get Wikipedia search suggestions
-
-### API Endpoints
-
-- `GET /api/health` - Health check
-- `GET /api/comics` - Get all comics
-- `GET /api/comics/<comic_id>` - Get specific comic
-- `DELETE /api/comics/<comic_id>` - Delete comic
-- `GET /api/images/<image_id>` - Serve comic image
-
-### Comic Endpoints
-
-- `GET /comics` - List all comics (legacy endpoint)
-
-## Local Development
+## Local Development Setup
 
 1. **Clone the repository**
    ```bash
