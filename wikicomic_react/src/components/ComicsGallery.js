@@ -19,16 +19,16 @@ const ComicsGallery = () => {
     try {
       setLoading(true);
       setError(null);
-      console.log('Fetching comics from:', `${API_BASE_URL}/comics`);
+      console.log('ComicsGallery: Fetching comics from:', `${API_BASE_URL}/comics`);
       const response = await axios.get(`${API_BASE_URL}/comics`);
-      console.log('Comics response:', response.data);
+      console.log('ComicsGallery: Response data:', response.data);
       if (response.data && response.data.comics) {
         setComics(response.data.comics);
       } else {
         throw new Error('Invalid response format');
       }
     } catch (err) {
-      console.error('Error fetching comics:', err);
+      console.error('ComicsGallery: Error fetching comics:', err);
       setError('Failed to fetch comics. Please try again.');
     } finally {
       setLoading(false);
@@ -37,6 +37,28 @@ const ComicsGallery = () => {
 
   const handleViewComic = (comicTitle) => {
     navigate(`/comic/${encodeURIComponent(comicTitle)}`);
+  };
+
+  // Helper function to get the first image URL for a comic
+  const getFirstImageUrl = (comic) => {
+    console.log('ComicsGallery: Getting first image for comic:', comic.title);
+    
+    // Try to get from images array first (MongoDB format)
+    if (comic.images && comic.images.length > 0) {
+      const firstImage = comic.images[0];
+      console.log('ComicsGallery: Found image in images array:', firstImage);
+      return getImageUrl(firstImage);
+    }
+    
+    // Fallback to scenes array
+    if (comic.scenes && comic.scenes.length > 0) {
+      const firstScene = comic.scenes[0];
+      console.log('ComicsGallery: Found image in scenes array:', firstScene);
+      return getImageUrl(firstScene);
+    }
+    
+    console.log('ComicsGallery: No images found for comic:', comic.title);
+    return '/placeholder-comic.png';
   };
 
   if (loading) {
@@ -91,6 +113,7 @@ const ComicsGallery = () => {
             </button>
           </div>
         </header>
+        
         {comics.length === 0 ? (
           <div className="text-center py-12">
             <div className="bg-white border-4 border-black rounded-lg p-8 inline-block transform -rotate-1" style={{ boxShadow: '8px 8px 0 rgba(0,0,0,0.8)' }}>
@@ -117,12 +140,16 @@ const ComicsGallery = () => {
                   onClick={() => handleViewComic(comic.title)}
                 >
                   <img
-                    src={getImageUrl(comic.images && comic.images[0])}
+                    src={getFirstImageUrl(comic)}
                     alt={comic.title}
                     className="object-cover w-full h-48 rounded-t-2xl border-b-4 border-black bg-white"
                     onError={(e) => {
+                      console.error('ComicsGallery: Failed to load image for comic:', comic.title);
                       e.target.onerror = null;
                       e.target.src = '/placeholder-comic.png';
+                    }}
+                    onLoad={() => {
+                      console.log('ComicsGallery: Image loaded successfully for comic:', comic.title);
                     }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -137,7 +164,7 @@ const ComicsGallery = () => {
                   </h3>
                   <div className="flex items-center justify-between">
                     <div className="text-sm font-bold text-purple-600">
-                      {comic.scenes?.length || 0} {comic.scenes?.length === 1 ? 'Scene' : 'Scenes'}
+                      {comic.scene_count || comic.scenes?.length || 0} {(comic.scene_count || comic.scenes?.length || 0) === 1 ? 'Scene' : 'Scenes'}
                     </div>
                   </div>
                 </div>

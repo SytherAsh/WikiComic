@@ -30,6 +30,27 @@ const PreviousComics = () => {
     fetchComics();
   }, []);
 
+  // Convert MongoDB image format to URLs for ComicFlipbook
+  const getImageUrls = (comic) => {
+    console.log('getImageUrls called with comic:', comic);
+    if (!comic.images || !Array.isArray(comic.images)) {
+      console.log('No images array found, returning empty array');
+      return [];
+    }
+    const urls = comic.images.map(img => {
+      const url = getImageUrl(img);
+      console.log('Converted image:', img, 'to URL:', url);
+      return url;
+    });
+    console.log('Final image URLs:', urls);
+    return urls;
+  };
+
+  const handleImageError = (e, comicTitle) => {
+    console.error(`Failed to load image for comic: ${comicTitle}`, e);
+    e.target.src = '/placeholder-comic.png';
+  };
+
   return (
     <div className="my-8">
       <h2 className="text-2xl font-bold mb-4">Previous Comics</h2>
@@ -42,10 +63,17 @@ const PreviousComics = () => {
               <div className="font-bold mb-2">{comic.title}</div>
               {comic.images && comic.images[0] && (
                 <img
-                  src={getImageUrl(comic.images && comic.images[0])}
+                  src={getImageUrl(comic.images[0])}
                   alt={comic.title}
                   className="w-full h-40 object-cover rounded"
+                  onError={(e) => handleImageError(e, comic.title)}
+                  onLoad={() => console.log(`Image loaded successfully for: ${comic.title}`)}
                 />
+              )}
+              {(!comic.images || comic.images.length === 0) && (
+                <div className="w-full h-40 bg-gray-200 flex items-center justify-center rounded">
+                  <span className="text-gray-500">No images</span>
+                </div>
               )}
             </div>
           ))}
@@ -53,7 +81,7 @@ const PreviousComics = () => {
       ) : (
         <div>
           <button className="mb-4 px-4 py-2 bg-gray-200 border border-black rounded" onClick={() => setSelectedComic(null)}>Back to Gallery</button>
-          <ComicFlipbook images={selectedComic.images} />
+          <ComicFlipbook images={getImageUrls(selectedComic)} />
         </div>
       )}
     </div>

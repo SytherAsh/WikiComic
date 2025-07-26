@@ -25,8 +25,40 @@ export const ROUTES = {
 
 // Helper function to get image URL
 export const getImageUrl = (image) => {
-  if (!image) return '/placeholder-comic.png';
-  if (image.startsWith('http')) return image;
-  // Encode spaces and special characters
-  return `${API_BASE_URL}${encodeURI(image)}`;
+  console.log('getImageUrl called with:', image);
+  
+  if (!image) {
+    console.log('No image provided, returning placeholder');
+    return '/placeholder-comic.png';
+  }
+  
+  // Handle MongoDB format: { url: "/api/images/...", id: "...", ... }
+  if (typeof image === 'object' && image.url) {
+    const fullUrl = `${API_BASE_URL}${image.url}`;
+    console.log('MongoDB format detected (url property), returning:', fullUrl);
+    return fullUrl;
+  }
+  
+  // Handle MongoDB scene format: { image_url: "/api/images/...", ... }
+  if (typeof image === 'object' && image.image_url) {
+    const fullUrl = `${API_BASE_URL}${image.image_url}`;
+    console.log('MongoDB scene format detected (image_url property), returning:', fullUrl);
+    return fullUrl;
+  }
+  
+  // Handle string URLs
+  if (typeof image === 'string') {
+    if (image.startsWith('http')) {
+      console.log('Full URL detected, returning:', image);
+      return image;
+    }
+    // Encode spaces and special characters
+    const fullUrl = `${API_BASE_URL}${encodeURI(image)}`;
+    console.log('String URL detected, returning:', fullUrl);
+    return fullUrl;
+  }
+  
+  // Fallback
+  console.log('Fallback case, returning placeholder');
+  return '/placeholder-comic.png';
 }; 

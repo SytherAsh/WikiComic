@@ -1,7 +1,24 @@
 import React from 'react';
 import ComicFlipbook from './ComicFlipbook';
+import { getImageUrl } from '../config/routes';
 
 const ComicResult = ({ result, storyline, scenes, images }) => {
+  // Convert MongoDB image format to URLs for ComicFlipbook
+  const getImageUrls = (imageList) => {
+    if (!imageList || !Array.isArray(imageList)) return [];
+    return imageList.map(img => {
+      // Handle both MongoDB format and legacy format
+      if (typeof img === 'object' && img.image_url) {
+        return getImageUrl(img);
+      } else if (typeof img === 'object' && img.image) {
+        return getImageUrl(img.image);
+      } else if (typeof img === 'string') {
+        return getImageUrl(img);
+      }
+      return getImageUrl(img);
+    });
+  };
+
   return (
     <div className="mt-8">
       {result && (
@@ -35,7 +52,7 @@ const ComicResult = ({ result, storyline, scenes, images }) => {
       {images && images.length > 0 && (
         <div className="mb-4">
           <h4 className="font-bold mb-2">Comic Flipbook</h4>
-          <ComicFlipbook images={images} />
+          <ComicFlipbook images={getImageUrls(images)} />
         </div>
       )}
     </div>

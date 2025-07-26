@@ -33,9 +33,12 @@ const ComicViewer = () => {
   const fetchComic = async () => {
     try {
       setLoading(true);
+      console.log('ComicViewer: Fetching comic with ID:', id);
       const response = await axios.get(`${API_BASE_URL}/comics`);
+      console.log('ComicViewer: Response data:', response.data);
       if (response.data && response.data.comics) {
         const found = response.data.comics.find(c => c.title === id);
+        console.log('ComicViewer: Found comic:', found);
         if (found) {
           setComic(found);
           setComicStyle(found.comicStyle);
@@ -47,6 +50,7 @@ const ComicViewer = () => {
         setError('Invalid response format');
       }
     } catch (err) {
+      console.error('ComicViewer: Error fetching comic:', err);
       setError('Failed to load comic');
     } finally {
       setLoading(false);
@@ -101,32 +105,23 @@ const ComicViewer = () => {
         };
       case 'western':
         return { 
-          overlayColor: 'bg-western-orange/70', 
-          panelStyle: 'shadow-amber-900/50 border-3px border-yellow-900/50 bg-comic-dots',
+          overlayColor: 'bg-western-red/60', 
+          panelStyle: 'shadow-xl border-3px border-red-900/30 bg-stripes',
           pageStyle: 'western-text font-comic',
-          buttonStyle: 'bg-western-orange hover:bg-western-orange/80',
-          explosionColor: '#FF9800'
-        };
-      case 'minimalist':
-        return { 
-          overlayColor: 'bg-minimalist-gray/70', 
-          panelStyle: 'shadow-md border border-gray-700',
-          pageStyle: 'minimalist-text',
-          buttonStyle: 'bg-minimalist-gray hover:bg-minimalist-gray/80',
-          explosionColor: '#607D8B'
+          buttonStyle: 'bg-western-red hover:bg-western-red/80 animate-bounce',
+          explosionColor: '#DC2626'
         };
       default:
         return { 
-          overlayColor: 'bg-black/50', 
-          panelStyle: 'shadow-lg',
-          pageStyle: '',
-          buttonStyle: 'bg-blue-600 hover:bg-blue-700',
-          explosionColor: '#3B82F6'
+          overlayColor: 'bg-purple-600/60', 
+          panelStyle: 'shadow-xl border-3px border-purple-900/30',
+          pageStyle: 'font-comic',
+          buttonStyle: 'bg-purple-600 hover:bg-purple-700',
+          explosionColor: '#7C3AED'
         };
     }
   };
 
-  // Utility to shuffle array
   function shuffle(array) {
     let currentIndex = array.length, randomIndex;
     while (currentIndex !== 0) {
@@ -137,57 +132,51 @@ const ComicViewer = () => {
     return array;
   }
 
-  // Prepare quiz data from comic key points
   const generateQuizData = () => {
-    const allKeyPoints = comic.scenes.flatMap(scene => scene.dialogue ? scene.dialogue.split('\n').filter(point => point.trim()) : []);
-    // Gather all unique words/phrases for distractors
-    const allWords = allKeyPoints.flatMap(point => point.split(' ')).filter(w => w.length > 3);
-    // Create mock quiz questions based on key points
-    const quiz = {
-      title: `${comic.title} Quiz`,
-      description: `Test your knowledge about ${comic.title}!`,
-      questions: allKeyPoints.map((point, index) => {
-        // Convert key point into a question
-        const words = point.split(' ');
-        const answer = words.slice(-3).join(' ');
-        // Generate 3 random distractors
-        let distractors = [];
-        while (distractors.length < 3) {
-          const candidate = shuffle(allWords).slice(0, 3).join(' ');
-          if (candidate !== answer && !distractors.includes(candidate)) {
-            distractors.push(candidate);
-          }
-        }
-        const options = shuffle([
-          { id: 'a', text: answer, correct: true },
-          { id: 'b', text: distractors[0], correct: false },
-          { id: 'c', text: distractors[1], correct: false },
-          { id: 'd', text: distractors[2], correct: false }
-        ]);
-        return {
-          id: index + 1,
-          question: point.replace(/\bis\b|\bare\b/, '_____ '),
-          options
-        };
-      }).slice(0, 5) // Limit to 5 questions
-    };
-    return quiz;
-  };
-  
-  // Start quiz
-  const handleStartQuiz = () => {
-    setAchievementUnlocked(false);
-    setShowQuiz(true);
-  };
-  
-  // Return to comic from quiz
-  const handleQuizComplete = (score) => {
-    setShowQuiz(false);
-    // Add points based on quiz score
-    setUserPoints(prev => prev + (score * 10));
+    if (!comic) return { questions: [] };
+    
+    const questions = [
+      {
+        id: 1,
+        question: `What is the main topic of "${comic.title}"?`,
+        options: shuffle([
+          { id: 'a', text: comic.title, correct: true },
+          { id: 'b', text: 'A different topic', correct: false },
+          { id: 'c', text: 'Something else', correct: false },
+          { id: 'd', text: 'Not sure', correct: false }
+        ])
+      },
+      {
+        id: 2,
+        question: 'How many scenes are in this comic?',
+        options: shuffle([
+          { id: 'a', text: comic.scenes.length.toString(), correct: true },
+          { id: 'b', text: (comic.scenes.length + 1).toString(), correct: false },
+          { id: 'c', text: (comic.scenes.length - 1).toString(), correct: false },
+          { id: 'd', text: 'Many', correct: false }
+        ])
+      }
+    ];
+    
+    return { questions };
   };
 
-  // Handle image click to open modal
+  const handleStartQuiz = () => {
+    console.log('ComicViewer: handleStartQuiz called');
+    console.log('ComicViewer: Current comic:', comic);
+    console.log('ComicViewer: Generating quiz data...');
+    const quizData = generateQuizData();
+    console.log('ComicViewer: Quiz data generated:', quizData);
+    setShowQuiz(true);
+  };
+
+  const handleQuizComplete = (score) => {
+    console.log('ComicViewer: handleQuizComplete called with score:', score);
+    setQuizScore(score);
+    setShowQuiz(false);
+    setAchievementUnlocked(true);
+  };
+
   const handleImageClick = () => {
     setImageModalOpen(true);
   };
@@ -196,7 +185,7 @@ const ComicViewer = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 to-gray-800">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-500 mx-auto"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-500 border-t-transparent"></div>
           <p className="mt-4 text-white">Loading comic...</p>
         </div>
       </div>
@@ -242,6 +231,32 @@ const ComicViewer = () => {
 
   // Flipbook UI
   const scene = comic.scenes[currentScene];
+  
+  // Handle different image formats (MongoDB vs legacy)
+  const getSceneImageUrl = (scene) => {
+    if (!scene) return '';
+    
+    console.log('ComicViewer: Processing scene:', scene);
+    
+    // MongoDB format: scene has image_url property
+    if (scene.image_url) {
+      console.log('ComicViewer: Using image_url from scene:', scene.image_url);
+      return getImageUrl(scene);
+    }
+    
+    // Legacy format: scene has image property
+    if (scene.image) {
+      console.log('ComicViewer: Using image from scene:', scene.image);
+      return getImageUrl(scene.image);
+    }
+    
+    // Fallback
+    console.log('ComicViewer: No image found in scene');
+    return '';
+  };
+
+  console.log('ComicViewer: Current scene:', scene);
+  console.log('ComicViewer: Scene image URL:', getSceneImageUrl(scene));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-100 via-pink-100 to-blue-100 flex flex-col items-center justify-center py-8 px-4 comic-bg-pattern">
@@ -272,12 +287,19 @@ const ComicViewer = () => {
           {/* Main Image */}
           <div className="flex-1 flex items-center justify-center">
             <img
-              src={getImageUrl(scene.image)}
+              src={getSceneImageUrl(scene)}
               alt={`Scene ${currentScene + 1}`}
               className="rounded-2xl border-4 border-black shadow-2xl object-contain cursor-pointer hover:scale-105 transition-transform duration-200"
               style={{ width: '60vw', height: '70vh', maxWidth: 900, maxHeight: 700, background: '#fff', transition: 'box-shadow 0.3s' }}
               onClick={handleImageClick}
               title="Click to view full size"
+              onError={(e) => {
+                console.error('ComicViewer: Failed to load image:', getSceneImageUrl(scene));
+                e.target.src = '/placeholder-comic.png';
+              }}
+              onLoad={() => {
+                console.log('ComicViewer: Image loaded successfully:', getSceneImageUrl(scene));
+              }}
             />
           </div>
           {/* Next Button */}
@@ -319,11 +341,15 @@ const ComicViewer = () => {
           {comic.scenes.map((s, idx) => (
             <img
               key={idx}
-              src={getImageUrl(s.image)}
+              src={getSceneImageUrl(s)}
               alt={`Thumbnail ${idx + 1}`}
               className={`object-cover rounded-lg border-4 border-black cursor-pointer transition-transform duration-200 ${currentScene === idx ? 'border-blue-500 scale-125 shadow-2xl' : 'border-gray-300 scale-90 opacity-60'} `}
               style={{ width: currentScene === idx ? 120 : 60, height: currentScene === idx ? 120 : 60, background: '#fff' }}
               onClick={() => setCurrentScene(idx)}
+              onError={(e) => {
+                console.error('ComicViewer: Failed to load thumbnail:', getSceneImageUrl(s));
+                e.target.src = '/placeholder-comic.png';
+              }}
             />
           ))}
         </div>
@@ -338,16 +364,43 @@ const ComicViewer = () => {
       <div className="fixed top-8 right-8 z-30">
         {!showQuiz && quizScore === null && (
           <button
-            className={`px-6 py-3 rounded-full ${buttonComic} text-lg flex items-center gap-2`}
+            className={`px-6 py-3 rounded-full ${buttonComic} text-lg flex items-center gap-2 hover:scale-110 transition-transform duration-200`}
             style={{ fontFamily: comicFont }}
-            onClick={handleStartQuiz}
+            onClick={() => {
+              console.log('ComicViewer: Quiz button clicked');
+              handleStartQuiz();
+            }}
+            onMouseEnter={() => console.log('ComicViewer: Quiz button hovered')}
           >
             <span role="img" aria-label="quiz">📝</span> Take Quiz
           </button>
         )}
+        {showQuiz && (
+          <div className="px-6 py-3 rounded-full bg-green-500 text-white text-lg font-bold border-2 border-black">
+            Quiz is Open!
+          </div>
+        )}
       </div>
       {/* Quiz Modal and Results (unchanged) */}
-      <Modal open={showQuiz} onClose={() => setShowQuiz(false)} center styles={{ modal: { maxWidth: 800, width: '98vw', background: 'linear-gradient(135deg, #fffbe7 0%, #ffe0e9 100%)', border: '5px solid #222', borderRadius: '30px', boxShadow: '0 8px 32px rgba(0,0,0,0.25), 0 0 0 8px #ffeb3b', padding: 0 } }}>
+      <Modal 
+        open={showQuiz} 
+        onClose={() => {
+          console.log('ComicViewer: Quiz modal closing');
+          setShowQuiz(false);
+        }} 
+        center 
+        styles={{ 
+          modal: { 
+            maxWidth: 800, 
+            width: '98vw', 
+            background: 'linear-gradient(135deg, #fffbe7 0%, #ffe0e9 100%)', 
+            border: '5px solid #222', 
+            borderRadius: '30px', 
+            boxShadow: '0 8px 32px rgba(0,0,0,0.25), 0 0 0 8px #ffeb3b', 
+            padding: 0 
+          } 
+        }}
+      >
         <div className="relative p-4">
           <div className="text-center mb-4">
             <span className="inline-block bg-gradient-to-r from-yellow-400 to-pink-400 text-white text-3xl font-extrabold py-2 px-8 rounded-lg border-2 border-black shadow-lg" style={{ fontFamily: 'Bangers, Comic Sans MS, Comic, cursive' }}>
@@ -356,7 +409,12 @@ const ComicViewer = () => {
           </div>
           <QuizComponent
             quizData={generateQuizData()}
-            onComplete={(score) => { setQuizScore(score); setShowQuiz(false); setUserPoints(prev => prev + (score * 10)); }}
+            onComplete={(score) => { 
+              console.log('ComicViewer: Quiz completed with score:', score);
+              setQuizScore(score); 
+              setShowQuiz(false); 
+              setUserPoints(prev => prev + (score * 10)); 
+            }}
             comicTopic={comic.title}
           />
         </div>
@@ -408,10 +466,14 @@ const ComicViewer = () => {
             <FaTimes size={20} />
           </button>
           <img
-            src={getImageUrl(scene.image)}
+            src={getSceneImageUrl(scene)}
             alt={`Scene ${currentScene + 1} - Full Size`}
             className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
             style={{ background: '#fff' }}
+            onError={(e) => {
+              console.error('ComicViewer: Failed to load modal image:', getSceneImageUrl(scene));
+              e.target.src = '/placeholder-comic.png';
+            }}
           />
           <div className="absolute bottom-4 left-4 bg-black/50 text-white px-4 py-2 rounded-lg">
             <p className="text-sm font-semibold">Scene {currentScene + 1} of {comic.scenes.length}</p>
