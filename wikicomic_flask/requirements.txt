@@ -5,4 +5,6 @@ groq
 requests
 Pillow
 python-dotenv
-google-genai
+google-generativeai
+pymongo
+bson
