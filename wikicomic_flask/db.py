@@ -7,10 +7,9 @@ are now handled by app/database.py
 
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
-
+import os
 # MongoDB Atlas URI
-uri = "mongodb+srv://Sawash:1%403Sawash123@sytherash.qlpzo.mongodb.net/?retryWrites=true&w=majority&appName=SytherAsh"
-
+uri = os.getenv('MONGODB_URI')
 def test_connection():
     """Test basic MongoDB connection"""
     try:
