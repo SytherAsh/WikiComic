@@ -15,38 +15,38 @@ def sanitize_filename(name: str) -> str:
 class ComicImageGenerator:
     STYLE_SETTINGS = {
         'Manga': {
-            'prompt': "manga comic book style, multi-panel page, text bubbles, dynamic action poses, expressive characters",
-            'negative_prompt': "western comic style, realistic, photographic, 3d rendered",
+            'prompt': "manga comic book style, dynamic action poses, large expressive eyes, flowing hair, speed lines, dramatic lighting, emotional facial expressions, clean line art, vibrant colors, multiple comic panels with speech bubbles, professional manga page layout",
+            'negative_prompt': "western comic style, realistic, photographic, 3d rendered, flat colors, simple illustrations",
             'guidance_scale': 7.5,
             'steps': 50
         },
         'Western': {
-            'prompt': "western comic book style, bold colors, halftone dots, strong outlines, multi-panel layout, expressive dialogue bubbles",
-            'negative_prompt': "manga, anime, photorealistic, 3d rendered",
+            'prompt': "classic western comic book style, bold primary colors, strong black outlines, halftone dots, vintage comic aesthetics, muscular superhero poses, dramatic shadows, comic book panels with clear borders, speech bubbles with bold text, action-packed scenes, retro comic book feel",
+            'negative_prompt': "manga, anime, photorealistic, 3d rendered, modern digital art, minimalist",
             'guidance_scale': 7.0,
             'steps': 45
         },
         'Minimalist': {
-            'prompt': "minimalist comic layout, clean frames, limited color palette, simple expressive lines, comic panels",
-            'negative_prompt': "busy, cluttered, detailed, complex patterns",
+            'prompt': "minimalist comic layout, clean geometric panels, limited color palette with bold contrasts, simple expressive line work, modern design aesthetic, elegant typography, focused storytelling with clear visual hierarchy, sophisticated composition",
+            'negative_prompt': "busy, cluttered, detailed, complex patterns, bright colors, traditional comic style",
             'guidance_scale': 8.0,
             'steps': 40
         },
         'Cartoon': {
-            'prompt': "cartoon comic book style, colorful, exaggerated expressions, multiple panels, text in speech bubbles",
-            'negative_prompt': "realistic, photographic, serious, gritty",
+            'prompt': "vibrant cartoon comic style, exaggerated character expressions, bouncy animation feel, bright cheerful colors, rounded shapes, fun visual elements, multiple panels with clear speech bubbles, playful design, family-friendly aesthetic, dynamic character poses",
+            'negative_prompt': "realistic, photographic, serious, gritty, dark colors, complex details",
             'guidance_scale': 7.0,
             'steps': 45
         },
         'Noir': {
-            'prompt': "noir comic layout, dark tones, high contrast, dramatic shadows, gritty comic panels, monochrome with text bubbles",
-            'negative_prompt': "bright colors, cheerful, flat lighting, cartoon",
+            'prompt': "noir comic layout, high contrast black and white with selective color, dramatic shadows and lighting, gritty urban atmosphere, cinematic angles, moody expressions, dark comic panels with white text bubbles, mysterious and dramatic mood, film noir aesthetic",
+            'negative_prompt': "bright colors, cheerful, flat lighting, cartoon style, colorful, happy",
             'guidance_scale': 8.5,
             'steps': 55
         },
         'Indie': {
-            'prompt': "indie comic style, hand-drawn feel, experimental panel layout, artistic ink, dialogue bubbles",
-            'negative_prompt': "commercial style, mainstream, polished, perfect",
+            'prompt': "indie comic style, hand-drawn artistic feel, experimental panel layouts, unique artistic touch, personal drawing style, creative use of space, artistic ink work, distinctive character designs, alternative comic book aesthetic, expressive dialogue bubbles",
+            'negative_prompt': "commercial style, mainstream, polished, perfect, corporate, generic",
             'guidance_scale': 7.0,
             'steps': 45
         }
@@ -63,30 +63,56 @@ class ComicImageGenerator:
     def _enhance_prompt(self, scene_prompt, style="Manga", dialogue=None):
         style_settings = self.STYLE_SETTINGS.get(style, self.STYLE_SETTINGS['Manga'])
 
+        # Ensure dialogue is always present
+        if not dialogue or len(dialogue.strip()) < 5:
+            dialogue = "Narrator: This scene reveals important information about the topic."
+
         dialogue_text = f"""
-        Include the following dialogue as comic-style speech bubbles within the panels:
+        CRITICAL: Include the following dialogue as clear, readable comic-style speech bubbles:
         "{dialogue}"
-        """ if dialogue else ""
+        
+        Dialogue Requirements:
+        - Create distinct speech bubbles for different characters
+        - Use thought bubbles for internal monologue
+        - Make text large and readable
+        - Position bubbles to not cover important visual elements
+        - Use different bubble shapes for different types of dialogue
+        """
 
         enhanced_prompt = f"""
-        Generate a full comic book page in {style} style with 2 to 4 comic panels.
+        Create a professional comic book page in {style} style with 2-4 well-designed comic panels.
 
-        Scene Description:
+        SCENE DESCRIPTION:
         {scene_prompt}
 
-        Style Characteristics:
+        STYLE CHARACTERISTICS:
         {style_settings['prompt']}
 
-        Guidelines:
-        - Include character dialogue using clear comic-style speech bubbles
-        - Organize layout like a printed comic page with panel borders
-        - Focus on action, emotion, and visual storytelling
-        - Ensure high resolution, clear character expressions and dynamic poses
-        - Avoid plain single-frame images – aim for full comic page format
+        COMIC PANEL REQUIREMENTS:
+        - Design as a proper comic page with clear panel borders
+        - Include dynamic character poses and expressive faces
+        - Show clear action and emotion in each panel
+        - Use varied camera angles and compositions
+        - Ensure high visual impact and storytelling clarity
 
+        DIALOGUE INTEGRATION:
         {dialogue_text}
 
-        Output a high-quality image that looks like a comic page, not an illustration.
+        VISUAL STORYTELLING:
+        - Characters should be actively engaged in the scene
+        - Include environmental details that support the story
+        - Use lighting and shadows to create mood
+        - Ensure each panel advances the narrative
+        - Make the scene educational and visually engaging
+
+        TECHNICAL REQUIREMENTS:
+        - High resolution and clear line work
+        - Professional comic book quality
+        - Balanced composition with proper use of space
+        - Color palette appropriate for {style} style
+        - Text should be clearly readable and well-integrated
+
+        Output a complete comic page that looks like it came from a published comic book, not a single illustration.
         """.strip()
 
         return enhanced_prompt
