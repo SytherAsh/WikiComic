@@ -158,6 +158,9 @@ const LandingPage = () => {
     setStoryline(null);
     setScenes([]);
     setImages([]);
+    // Clear quiz state when starting new comic creation
+    setShowQuiz(false);
+    setQuizScore(null);
     try {
       const res = await fetch(`${API_BASE_URL}/search`, {
         method: 'POST',
@@ -364,7 +367,8 @@ const LandingPage = () => {
                       scenes={scenes}
                       images={images}
                     />
-                    {!showQuiz && quizScore === null && (
+                    {/* Only show Take Quiz if we have a freshly created comic with images */}
+                    {images && images.length > 0 && !showQuiz && quizScore === null && (
                       <div className="text-center my-8">
                         <button
                           className="px-12 py-6 bg-gradient-to-r from-yellow-400 via-pink-400 to-purple-500 text-white text-3xl font-extrabold rounded-2xl border-4 border-black shadow-2xl hover:scale-110 transition-all duration-200"
