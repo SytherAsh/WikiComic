@@ -7,7 +7,7 @@ class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev')
     
     # MongoDB Configuration
-    MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb+srv://Sawash:1%403Sawash123@sytherash.qlpzo.mongodb.net/?retryWrites=true&w=majority&appName=SytherAsh')
+    MONGODB_URI = os.getenv('MONGODB_URI')
     MONGODB_DB_NAME = os.getenv('MONGODB_DB_NAME', 'Wikicomic')
     MONGODB_COLLECTION_IMAGES = os.getenv('MONGODB_COLLECTION_IMAGES', 'Images')
     MONGODB_COLLECTION_COMICS = os.getenv('MONGODB_COLLECTION_COMICS', 'Comics')
