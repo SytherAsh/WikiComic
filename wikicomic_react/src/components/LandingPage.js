@@ -159,7 +159,7 @@ const LandingPage = () => {
     setScenes([]);
     setImages([]);
     try {
-      const res = await fetch(`${API_BASE_URL}search`, {
+      const res = await fetch(`${API_BASE_URL}/search`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
         body: new URLSearchParams({
