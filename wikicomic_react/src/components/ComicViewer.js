@@ -6,6 +6,7 @@ import QuizComponent from './QuizComponent';
 import { Modal } from 'react-responsive-modal';
 import 'react-responsive-modal/styles.css';
 import { API_BASE_URL, getImageUrl } from '../config/routes';
+import { FaChevronLeft, FaChevronRight, FaComments, FaTimes } from 'react-icons/fa';
 
 const ComicViewer = () => {
   const { id } = useParams();
@@ -21,6 +22,8 @@ const ComicViewer = () => {
   const [showQuiz, setShowQuiz] = useState(false);
   const [quizScore, setQuizScore] = useState(null);
   const { setComicStyle, themeStyles, currentTheme } = useTheme();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [imageModalOpen, setImageModalOpen] = useState(false);
 
   useEffect(() => {
     fetchComic();
@@ -184,6 +187,11 @@ const ComicViewer = () => {
     setUserPoints(prev => prev + (score * 10));
   };
 
+  // Handle image click to open modal
+  const handleImageClick = () => {
+    setImageModalOpen(true);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 to-gray-800">
@@ -236,7 +244,7 @@ const ComicViewer = () => {
   const scene = comic.scenes[currentScene];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-100 via-pink-100 to-blue-100 flex items-center justify-center py-8 px-4 comic-bg-pattern">
+    <div className="min-h-screen bg-gradient-to-br from-yellow-100 via-pink-100 to-blue-100 flex flex-col items-center justify-center py-8 px-4 comic-bg-pattern">
       <div className="absolute top-8 left-8 z-20">
         <button
           onClick={() => navigate('/gallery')}
@@ -249,73 +257,85 @@ const ComicViewer = () => {
           Back to Gallery
         </button>
       </div>
-      <div className={`relative ${panelBg} ${panelBorder} rounded-2xl shadow-2xl flex w-full max-w-6xl min-h-[700px]`} style={{ fontFamily: comicFont }}>
-        {/* Main Image */}
-        <div className="flex-1 flex flex-col items-center justify-center p-10">
-          <h1 className="text-5xl font-extrabold mb-6 text-center text-blue-900 drop-shadow-lg tracking-wider" style={{ fontFamily: comicFont, letterSpacing: '2px', textShadow: '2px 2px 0 #fff, 4px 4px 0 #000' }}>{comic.title}</h1>
-          <div className="bg-white border-4 border-black rounded-xl shadow-xl flex items-center justify-center mb-8" style={{ minHeight: 500, minWidth: 500, maxWidth: 700 }}>
+      <div className="relative flex flex-col items-center w-full max-w-7xl">
+        <h1 className="text-5xl font-extrabold mb-6 text-center text-blue-900 drop-shadow-lg tracking-wider" style={{ fontFamily: comicFont, letterSpacing: '2px', textShadow: '2px 2px 0 #fff, 4px 4px 0 #000' }}>{comic.title}</h1>
+        <div className="relative flex items-center justify-center w-full" style={{ minHeight: 600 }}>
+          {/* Previous Button */}
+          <button
+            onClick={handlePreviousScene}
+            disabled={currentScene === 0}
+            className={`absolute left-0 z-10 px-6 py-4 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 text-white text-2xl font-extrabold border-2 border-black shadow-lg hover:scale-105 transition-all duration-200 ${currentScene === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+            style={{ fontFamily: comicFont }}
+          >
+            <FaChevronLeft />
+          </button>
+          {/* Main Image */}
+          <div className="flex-1 flex items-center justify-center">
             <img
               src={getImageUrl(scene.image)}
               alt={`Scene ${currentScene + 1}`}
-              className="w-full h-[500px] object-contain rounded-xl"
-              style={{ background: '#fff' }}
+              className="rounded-2xl border-4 border-black shadow-2xl object-contain cursor-pointer hover:scale-105 transition-transform duration-200"
+              style={{ width: '60vw', height: '70vh', maxWidth: 900, maxHeight: 700, background: '#fff', transition: 'box-shadow 0.3s' }}
+              onClick={handleImageClick}
+              title="Click to view full size"
             />
           </div>
-          <div className="flex justify-center items-center gap-6 mt-4">
+          {/* Next Button */}
+          <button
+            onClick={handleNextScene}
+            disabled={currentScene === comic.scenes.length - 1}
+            className={`absolute right-0 z-10 px-6 py-4 rounded-full bg-gradient-to-l from-purple-400 to-pink-400 text-white text-2xl font-extrabold border-2 border-black shadow-lg hover:scale-105 transition-all duration-200 ${currentScene === comic.scenes.length - 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
+            style={{ fontFamily: comicFont }}
+          >
+            <FaChevronRight />
+          </button>
+          {/* Dialogue Sidebar Toggle */}
+          <button
+            className="absolute top-4 right-4 z-20 px-4 py-2 bg-yellow-300 border-2 border-black rounded-full shadow-lg flex items-center gap-2 hover:bg-yellow-400"
+            onClick={() => setSidebarOpen((open) => !open)}
+            style={{ fontFamily: comicFont }}
+          >
+            <FaComments /> <span className="hidden md:inline">Dialogue</span>
+          </button>
+          {/* Collapsible Sidebar */}
+          <div
+            className={`fixed top-0 right-0 h-full w-full md:w-[420px] bg-white border-l-4 border-black shadow-2xl p-8 flex flex-col justify-center comic-speech-bubble transition-transform duration-300 z-40 ${sidebarOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-[420px]'}`}
+            style={{ fontFamily: comicFont, minHeight: 500 }}
+          >
             <button
-              onClick={handlePreviousScene}
-              disabled={currentScene === 0}
-              className={`px-8 py-3 rounded-full ${buttonComic} text-xl ${currentScene === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-              style={{ fontFamily: comicFont }}
+              className="absolute top-4 right-4 px-3 py-1 bg-gray-200 border border-black rounded-full text-lg font-bold hover:bg-gray-300"
+              onClick={() => setSidebarOpen(false)}
             >
-              Previous
+              Close
             </button>
-            <span className="font-extrabold text-2xl text-purple-800" style={{ fontFamily: comicFont }}>
-              Scene {currentScene + 1} of {comic.scenes.length}
-            </span>
-            <button
-              onClick={handleNextScene}
-              disabled={currentScene === comic.scenes.length - 1}
-              className={`px-8 py-3 rounded-full ${buttonComic} text-xl ${currentScene === comic.scenes.length - 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
-              style={{ fontFamily: comicFont }}
-            >
-              Next
-            </button>
-          </div>
-          {/* Thumbnails */}
-          <div className="flex mt-8 space-x-3 overflow-x-auto">
-            {comic.scenes.map((s, idx) => (
-              <img
-                key={idx}
-                src={getImageUrl(s.image)}
-                alt={`Thumbnail ${idx + 1}`}
-                className={`w-20 h-20 object-cover rounded-lg border-4 border-black cursor-pointer ${currentScene === idx ? 'border-blue-500 scale-110' : 'border-gray-300'} transition-transform`}
-                onClick={() => setCurrentScene(idx)}
-                style={{ background: '#fff' }}
-              />
-            ))}
+            <h2 className="text-2xl font-extrabold mb-6 text-pink-600 drop-shadow-lg" style={{ fontFamily: comicFont }}>DIALOGUE</h2>
+            <div className="flex-1 overflow-y-auto text-xl text-black whitespace-pre-line" style={{ fontFamily: 'Inter, Arial, Helvetica, sans-serif', fontWeight: 500, lineHeight: 1.6, letterSpacing: '0.01em', textShadow: 'none' }}>
+              {scene.dialogue}
+            </div>
           </div>
         </div>
-        {/* Sidebar for Dialogue */}
-        <div className="w-96 bg-white border-l-4 border-black p-8 flex flex-col justify-center comic-speech-bubble relative" style={{ fontFamily: comicFont, minHeight: 500 }}>
-          <h2 className="text-2xl font-extrabold mb-6 text-pink-600 drop-shadow-lg" style={{ fontFamily: comicFont }}>DIALOGUE</h2>
-          <div className="flex-1 overflow-y-auto text-xl text-black whitespace-pre-line" style={{ fontFamily: 'Inter, Arial, Helvetica, sans-serif', fontWeight: 500, lineHeight: 1.6, letterSpacing: '0.01em', textShadow: 'none' }}>
-            {scene.dialogue}
-          </div>
+        {/* Thumbnails */}
+        <div className="flex mt-8 space-x-3 overflow-x-auto w-full justify-center">
+          {comic.scenes.map((s, idx) => (
+            <img
+              key={idx}
+              src={getImageUrl(s.image)}
+              alt={`Thumbnail ${idx + 1}`}
+              className={`object-cover rounded-lg border-4 border-black cursor-pointer transition-transform duration-200 ${currentScene === idx ? 'border-blue-500 scale-125 shadow-2xl' : 'border-gray-300 scale-90 opacity-60'} `}
+              style={{ width: currentScene === idx ? 120 : 60, height: currentScene === idx ? 120 : 60, background: '#fff' }}
+              onClick={() => setCurrentScene(idx)}
+            />
+          ))}
         </div>
-        {/* Comic-style background pattern (optional) */}
-        <style>{`
-          .comic-bg-pattern {
-            background-image: repeating-linear-gradient(135deg, rgba(0,0,0,0.03) 0px, rgba(0,0,0,0.03) 2px, transparent 2px, transparent 20px);
-          }
-          .comic-speech-bubble {
-            border-radius: 30px 30px 30px 0px/40px 40px 40px 0px;
-            box-shadow: 8px 8px 0 #000, 0 0 0 4px #fff;
-            border: 4px solid #000;
-          }
-        `}</style>
+        {/* Scene Counter */}
+        <div className="flex items-center justify-center gap-4 mt-6">
+          <span className="font-extrabold text-2xl text-purple-800" style={{ fontFamily: comicFont }}>
+            Scene {currentScene + 1} of {comic.scenes.length}
+          </span>
+        </div>
       </div>
-      <div className="absolute top-8 right-8 z-20">
+      {/* Quiz Button */}
+      <div className="fixed top-8 right-8 z-30">
         {!showQuiz && quizScore === null && (
           <button
             className={`px-6 py-3 rounded-full ${buttonComic} text-lg flex items-center gap-2`}
@@ -326,6 +346,7 @@ const ComicViewer = () => {
           </button>
         )}
       </div>
+      {/* Quiz Modal and Results (unchanged) */}
       <Modal open={showQuiz} onClose={() => setShowQuiz(false)} center styles={{ modal: { maxWidth: 800, width: '98vw', background: 'linear-gradient(135deg, #fffbe7 0%, #ffe0e9 100%)', border: '5px solid #222', borderRadius: '30px', boxShadow: '0 8px 32px rgba(0,0,0,0.25), 0 0 0 8px #ffeb3b', padding: 0 } }}>
         <div className="relative p-4">
           <div className="text-center mb-4">
@@ -353,6 +374,50 @@ const ComicViewer = () => {
           </button>
         </div>
       )}
+      {/* Sidebar overlay background for mobile */}
+      {sidebarOpen && <div className="fixed inset-0 bg-black/40 z-30 md:hidden" onClick={() => setSidebarOpen(false)} />}
+
+      {/* Image Modal */}
+      <Modal 
+        open={imageModalOpen} 
+        onClose={() => setImageModalOpen(false)} 
+        center 
+        styles={{ 
+          modal: { 
+            maxWidth: '95vw', 
+            maxHeight: '95vh', 
+            width: 'auto', 
+            height: 'auto', 
+            background: 'transparent', 
+            border: 'none', 
+            borderRadius: '0', 
+            boxShadow: 'none', 
+            padding: 0 
+          },
+          overlay: {
+            background: 'rgba(0, 0, 0, 0.8)',
+            backdropFilter: 'blur(4px)'
+          }
+        }}
+      >
+        <div className="relative">
+          <button
+            className="absolute top-4 right-4 z-50 p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors duration-200"
+            onClick={() => setImageModalOpen(false)}
+          >
+            <FaTimes size={20} />
+          </button>
+          <img
+            src={getImageUrl(scene.image)}
+            alt={`Scene ${currentScene + 1} - Full Size`}
+            className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+            style={{ background: '#fff' }}
+          />
+          <div className="absolute bottom-4 left-4 bg-black/50 text-white px-4 py-2 rounded-lg">
+            <p className="text-sm font-semibold">Scene {currentScene + 1} of {comic.scenes.length}</p>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
