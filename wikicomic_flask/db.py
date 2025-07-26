@@ -8,6 +8,8 @@ are now handled by app/database.py
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
 import os
+import dotenv
+dotenv.load_dotenv()
 # MongoDB Atlas URI
 uri = os.getenv('MONGODB_URI')
 def test_connection():

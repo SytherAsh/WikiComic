@@ -1,0 +1,34 @@
+# Flask Configuration
+SECRET_KEY=your-super-secret-key-change-this-in-production
+DEBUG=False
+
+# MongoDB Configuration
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority
+MONGODB_DB_NAME=Wikicomic
+MONGODB_COLLECTION_IMAGES=Images
+MONGODB_COLLECTION_COMICS=Comics
+MONGODB_COLLECTION_SCENES=Scenes
+
+# API Keys (Required)
+GROQ_API_KEY=your-groq-api-key-here
+GEMINI_API_KEY=your-gemini-api-key-here
+
+# Optional API Keys
+HF_TOKEN=your-huggingface-token-here
+GOOGLE_API_KEY=your-google-api-key-here
+
+# CORS Configuration (Production)
+CORS_ORIGINS=https://your-frontend-domain.vercel.app,https://your-custom-domain.com
+
+# Image Storage Configuration
+MAX_IMAGE_SIZE=10485760
+ALLOWED_IMAGE_TYPES=image/png,image/jpeg,image/jpg,image/webp
+
+# Comic Generation Settings
+DEFAULT_COMIC_STYLE=Manga
+DEFAULT_COMIC_LENGTH=medium
+MAX_SCENES=10
+
+# Image Generation Settings
+IMAGE_FORMAT=base64
+IMAGE_QUALITY=95 
