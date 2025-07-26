@@ -16,7 +16,6 @@ class Config:
     # API Keys
     GROQ_API_KEY = os.getenv('GROQ_API_KEY')
     HF_TOKEN = os.getenv('HF_TOKEN')
-    GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
     GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
     
     # CORS Configuration

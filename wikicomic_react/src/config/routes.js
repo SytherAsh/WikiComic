@@ -1,8 +1,8 @@
 // Route configuration for the application
 // All routes are now centralized and environment-based
 
-// API Base URL from environment variable
-export const API_BASE_URL = process.env.REACT_APP_API_URL 
+// API Base URL from environment variable with fallback
+export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000'
 
 // Debug logging
 console.log('Environment REACT_APP_API_URL:', process.env.REACT_APP_API_URL);

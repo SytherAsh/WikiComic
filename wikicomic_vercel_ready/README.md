@@ -10,6 +10,7 @@ A Flask application that generates comics from Wikipedia articles using AI.
 - MongoDB storage for comics and images
 - RESTful API endpoints
 - Modern web interface
+- Real-time MongoDB connection status
 
 ## Quick Setup for Vercel Deployment
 
@@ -77,63 +78,37 @@ CORS_ORIGINS=https://your-frontend-domain.vercel.app
    - Backend: http://localhost:5000
    - API: http://localhost:5000/api/health
 
-## Deployment to Vercel
+## Testing the Application
 
-1. **Install Vercel CLI**
-   ```bash
-   npm install -g vercel
-   ```
-
-2. **Login to Vercel**
-   ```bash
-   vercel login
-   ```
-
-3. **Deploy**
-   ```bash
-   vercel
-   ```
-
-4. **Set environment variables in Vercel dashboard**
-   - Go to your project settings
-   - Add all environment variables from your `.env` file
-
-5. **Deploy to production**
-   ```bash
-   vercel --prod
-   ```
-
-## API Usage Examples
-
-### Generate a Comic
+### Quick Test
+Run the test script to verify everything works:
 
 ```bash
-curl -X POST "https://your-vercel-app.vercel.app/search" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "Albert Einstein",
-    "style": "Manga",
-    "length": "medium"
-  }'
+python test_app.py
 ```
 
-### Get All Comics
+### Manual Testing
+1. **Home Page**: Visit `/` to see MongoDB connection status
+2. **Health Check**: Visit `/api/health` for system status
+3. **Debug Info**: Visit `/api/debug` for configuration details
+4. **Search Page**: Visit `/search` to generate comics
+5. **Comics Page**: Visit `/comics` to view generated comics
 
-```bash
-curl "https://your-vercel-app.vercel.app/api/comics"
-```
+## API Endpoints
 
-### Get Specific Comic
+### Core Endpoints
+- `GET /` - Home page with status information
+- `GET /search` - Search page for comic generation
+- `POST /search` - Generate comic from Wikipedia article
+- `GET /comics` - List all comics
 
-```bash
-curl "https://your-vercel-app.vercel.app/api/comics/64f1a2b3c4d5e6f7g8h9i0j1"
-```
-
-### Get Comic Image
-
-```bash
-curl "https://your-vercel-app.vercel.app/api/images/64f1a2b3c4d5e6f7g8h9i0j1"
-```
+### API Endpoints
+- `GET /api/health` - Health check with MongoDB status
+- `GET /api/debug` - Debug information and configuration
+- `GET /api/comics` - Get all comics (JSON)
+- `GET /api/comics/<comic_id>` - Get specific comic
+- `DELETE /api/comics/<comic_id>` - Delete comic
+- `GET /api/images/<image_id>` - Serve comic image
 
 ## Comic Styles
 
@@ -146,53 +121,23 @@ The application supports multiple comic styles:
 5. **Noir** - Dark, dramatic noir style with high contrast
 6. **Indie** - Artistic, hand-drawn indie comic style
 
-## Database Schema
+## MongoDB Connection Status
 
-### Comics Collection
-```json
-{
-  "_id": "ObjectId",
-  "title": "String",
-  "style": "String",
-  "scenes": "Array",
-  "scene_count": "Number",
-  "created_at": "Date",
-  "updated_at": "Date"
-}
-```
+The application provides real-time MongoDB connection status:
 
-### Images Collection
-```json
-{
-  "_id": "ObjectId",
-  "comic_title": "String",
-  "scene_number": "Number",
-  "scene_text": "String",
-  "file_size": "Number",
-  "created_at": "Date",
-  "metadata": "Object"
-}
-```
+- **Home Page**: Shows database and API key status
+- **Health Endpoint**: Detailed connection information
+- **Debug Endpoint**: Configuration and connection details
+- **Startup Logs**: Clear confirmation of MongoDB connection
 
 ## Error Handling
 
-The API includes comprehensive error handling:
+The application includes comprehensive error handling:
 
-- **400 Bad Request** - Invalid input parameters
-- **404 Not Found** - Resource not found
-- **500 Internal Server Error** - Server-side errors
-
-All errors return JSON responses with descriptive messages.
-
-## CORS Configuration
-
-CORS is configured to allow requests from specified origins. Update the `CORS_ORIGINS` environment variable to include your frontend domain.
-
-## Monitoring and Logging
-
-- Application logs are available in Vercel dashboard
-- Health check endpoint: `/api/health`
-- Database connection status is monitored
+- **Graceful Startup**: App starts even if MongoDB is not configured
+- **Connection Validation**: All database operations check connection status
+- **Clear Error Messages**: User-friendly error messages with helpful guidance
+- **Detailed Logging**: Comprehensive logging for debugging
 
 ## Troubleshooting
 
@@ -219,12 +164,43 @@ CORS is configured to allow requests from specified origins. Update the `CORS_OR
 
 For local development, set `DEBUG=True` in your environment variables to enable detailed error messages.
 
+## Project Structure
+
+```
+wikicomic_vercel_ready/
+├── api/
+│   └── index.py              # Vercel serverless function entry point
+├── app/
+│   ├── __init__.py           # Flask app factory with startup logging
+│   ├── config.py             # Configuration and environment variables
+│   ├── database.py           # MongoDB connection and operations
+│   ├── routes/
+│   │   ├── api.py            # API endpoints for images and comics
+│   │   ├── comics.py         # Comic listing endpoints
+│   │   ├── home.py           # Home page route with status
+│   │   ├── input.py          # Input handling routes
+│   │   └── search.py         # Search and comic generation routes
+│   ├── templates/
+│   │   ├── home.html         # Home page with status display
+│   │   ├── search.html       # Simplified search page
+│   │   └── comics.html       # Comics listing page
+│   └── utils/
+│       ├── imagegen.py       # Image generation utilities
+│       ├── storygen.py       # Story generation utilities
+│       └── wikiextract.py    # Wikipedia content extraction
+├── test_app.py               # Test script for verification
+├── requirements.txt          # Python dependencies with versions
+├── run.py                    # Local development server
+├── vercel.json              # Vercel configuration
+└── README.md                # This file
+```
+
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Test thoroughly
+4. Test thoroughly using `test_app.py`
 5. Submit a pull request
 
 ## License
@@ -236,4 +212,5 @@ This project is licensed under the MIT License.
 For support and questions:
 - Create an issue in the repository
 - Check the troubleshooting section
-- Review the API documentation 
+- Review the API documentation
+- Run the test script to diagnose issues 

@@ -22,9 +22,15 @@ const ComicsGallery = () => {
       console.log('ComicsGallery: Fetching comics from:', `${API_BASE_URL}/comics`);
       const response = await axios.get(`${API_BASE_URL}/comics`);
       console.log('ComicsGallery: Response data:', response.data);
+      console.log('ComicsGallery: Response data type:', typeof response.data);
+      console.log('ComicsGallery: Response data keys:', Object.keys(response.data || {}));
+      console.log('ComicsGallery: response.data.comics exists:', !!response.data?.comics);
+      console.log('ComicsGallery: response.data.comics length:', response.data?.comics?.length);
+      
       if (response.data && response.data.comics) {
         setComics(response.data.comics);
       } else {
+        console.error('ComicsGallery: Invalid response format. Expected response.data.comics but got:', response.data);
         throw new Error('Invalid response format');
       }
     } catch (err) {

@@ -83,6 +83,11 @@ class MongoDBManager:
     def _create_indexes(self):
         """Create database indexes for better performance"""
         try:
+            # Check if collections are properly initialized
+            if self.images_collection is None or self.comics_collection is None or self.scenes_collection is None:
+                logger.warning("⚠️ Cannot create indexes: Collections not initialized")
+                return
+                
             # Index for images collection
             self.images_collection.create_index([("comic_title", 1)])
             self.images_collection.create_index([("scene_number", 1)])
@@ -117,6 +122,10 @@ class MongoDBManager:
         """
         if not self._check_connection():
             raise ConnectionError("MongoDB is not connected")
+            
+        # Check if collections are properly initialized
+        if self.fs is None or self.images_collection is None:
+            raise ConnectionError("Database collections not initialized")
             
         try:
             # Prepare metadata
@@ -170,6 +179,11 @@ class MongoDBManager:
             logger.error("❌ Cannot retrieve image: MongoDB is not connected")
             return None
             
+        # Check if collections are properly initialized
+        if self.fs is None or self.images_collection is None:
+            logger.error("❌ Cannot retrieve image: Database collections not initialized")
+            return None
+            
         try:
             # Get file from GridFS
             grid_out = self.fs.get(ObjectId(image_id))
@@ -205,6 +219,10 @@ class MongoDBManager:
         if not self._check_connection():
             raise ConnectionError("MongoDB is not connected")
             
+        # Check if collection is properly initialized
+        if self.comics_collection is None:
+            raise ConnectionError("Database collection not initialized")
+            
         try:
             comic_doc = {
                 "title": title,
@@ -229,8 +247,16 @@ class MongoDBManager:
             logger.error("❌ Cannot retrieve comic: MongoDB is not connected")
             return None
             
+        # Check if collection is properly initialized
+        if self.comics_collection is None:
+            logger.error("❌ Cannot retrieve comic: Database collection not initialized")
+            return None
+            
         try:
-            return self.comics_collection.find_one({"_id": ObjectId(comic_id)})
+            comic = self.comics_collection.find_one({"_id": ObjectId(comic_id)})
+            if comic:
+                comic["_id"] = str(comic.get("_id", ""))
+            return comic
         except Exception as e:
             logger.error(f"❌ Failed to get comic {comic_id}: {e}")
             return None
@@ -241,28 +267,51 @@ class MongoDBManager:
             logger.error("❌ Cannot retrieve comics: MongoDB is not connected")
             return []
             
+        # Check if collections are properly initialized
+        if self.comics_collection is None or self.images_collection is None:
+            logger.error("❌ Cannot retrieve comics: Database collections not initialized")
+            return []
+            
         try:
+            logger.info("🔍 Starting to retrieve all comics...")
             comics = []
+            
+            # Count total comics in collection
+            total_comics = self.comics_collection.count_documents({})
+            logger.info(f"📊 Total comics in database: {total_comics}")
+            
             for comic in self.comics_collection.find().sort("created_at", -1):
-                comic_id = str(comic["_id"])
+                # Ensure comic is not None and has required fields
+                if not comic:
+                    logger.warning("⚠️ Found None comic document, skipping...")
+                    continue
+                    
+                comic_id = str(comic.get("_id", ""))
+                comic_title = comic.get("title", "")
+                
+                logger.info(f"📖 Processing comic: {comic_title} (ID: {comic_id})")
                 
                 # Get images for this comic
-                images = self.images_collection.find({"comic_title": comic["title"]}).sort("scene_number", 1)
+                images = self.images_collection.find({"comic_title": comic_title}).sort("scene_number", 1)
                 
                 # Convert images to list with proper URLs
                 image_list = []
                 for img in images:
-                    image_list.append({
-                        "id": str(img["_id"]),
-                        "url": f"/api/images/{img['_id']}",
-                        "scene_number": img["scene_number"],
-                        "scene_text": img["scene_text"]
-                    })
+                    if img:  # Ensure img is not None
+                        image_list.append({
+                            "id": str(img.get("_id", "")),
+                            "url": f"/api/images/{img.get('_id', '')}",
+                            "scene_number": img.get("scene_number", 0),
+                            "scene_text": img.get("scene_text", "")
+                        })
+                
+                logger.info(f"��️ Found {len(image_list)} images for comic: {comic_title}")
                 
                 comic["images"] = image_list
                 comic["_id"] = comic_id
                 comics.append(comic)
             
+            logger.info(f"✅ Successfully retrieved {len(comics)} comics")
             return comics
             
         except Exception as e:
@@ -275,10 +324,15 @@ class MongoDBManager:
             logger.error("❌ Cannot retrieve comic: MongoDB is not connected")
             return None
             
+        # Check if collection is properly initialized
+        if self.comics_collection is None:
+            logger.error("❌ Cannot retrieve comic: Database collection not initialized")
+            return None
+            
         try:
             comic = self.comics_collection.find_one({"title": title})
             if comic:
-                comic["_id"] = str(comic["_id"])
+                comic["_id"] = str(comic.get("_id", ""))
                 return comic
             return None
         except Exception as e:
@@ -291,22 +345,33 @@ class MongoDBManager:
             logger.error("❌ Cannot delete comic: MongoDB is not connected")
             return False
             
+        # Check if collections are properly initialized
+        if self.comics_collection is None or self.images_collection is None or self.fs is None:
+            logger.error("❌ Cannot delete comic: Database collections not initialized")
+            return False
+            
         try:
             # Get comic to find associated images
             comic = self.get_comic(comic_id)
             if not comic:
                 return False
             
+            comic_title = comic.get("title", "")
+            if not comic_title:
+                logger.error(f"❌ Comic {comic_id} has no title")
+                return False
+            
             # Delete all images for this comic
-            images = self.images_collection.find({"comic_title": comic["title"]})
+            images = self.images_collection.find({"comic_title": comic_title})
             for img in images:
-                try:
-                    self.fs.delete(img["_id"])
-                except:
-                    pass  # Image might already be deleted
+                if img and img.get("_id"):
+                    try:
+                        self.fs.delete(img["_id"])
+                    except:
+                        pass  # Image might already be deleted
             
             # Delete image documents
-            self.images_collection.delete_many({"comic_title": comic["title"]})
+            self.images_collection.delete_many({"comic_title": comic_title})
             
             # Delete comic document
             result = self.comics_collection.delete_one({"_id": ObjectId(comic_id)})

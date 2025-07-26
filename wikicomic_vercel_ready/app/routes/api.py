@@ -122,15 +122,15 @@ def health_check():
                     "status": "healthy",
                     "database": "connected",
                     "message": "All systems operational",
-                    "mongodb_uri_configured": bool(db_manager.client),
-                    "collections_ready": bool(db_manager.db)
+                    "mongodb_uri_configured": db_manager.client is not None,
+                    "collections_ready": db_manager.db is not None
                 })
             except Exception as e:
                 return jsonify({
                     "status": "unhealthy",
                     "database": "connection_failed",
                     "error": str(e),
-                    "mongodb_uri_configured": bool(db_manager.client),
+                    "mongodb_uri_configured": db_manager.client is not None,
                     "collections_ready": False
                 }), 500
         else:
@@ -163,7 +163,7 @@ def debug_info():
         
         # Get configuration info (without exposing sensitive data)
         config_info = {
-            "mongodb_uri_configured": bool(current_app.config.get('MONGODB_URI')),
+            "mongodb_uri_configured": current_app.config.get('MONGODB_URI') is not None,
             "mongodb_uri_length": len(current_app.config.get('MONGODB_URI', '')),
             "mongodb_db_name": current_app.config.get('MONGODB_DB_NAME'),
             "mongodb_collections": {
@@ -173,15 +173,15 @@ def debug_info():
             },
             "database_connected": db_manager.connected,
             "api_keys_configured": {
-                "groq": bool(current_app.config.get('GROQ_API_KEY')),
-                "gemini": bool(current_app.config.get('GEMINI_API_KEY')),
-                "google": bool(current_app.config.get('GOOGLE_API_KEY')),
-                "hf_token": bool(current_app.config.get('HF_TOKEN'))
+                "groq": current_app.config.get('GROQ_API_KEY') is not None,
+                "gemini": current_app.config.get('GEMINI_API_KEY') is not None,
+                "google": current_app.config.get('GOOGLE_API_KEY') is not None,
+                "hf_token": current_app.config.get('HF_TOKEN') is not None
             },
             "cors_origins": current_app.config.get('CORS_ORIGINS'),
             "environment": {
                 "debug": current_app.config.get('DEBUG', False),
-                "secret_key_configured": bool(current_app.config.get('SECRET_KEY'))
+                "secret_key_configured": current_app.config.get('SECRET_KEY') is not None
             }
         }
         
@@ -190,8 +190,8 @@ def debug_info():
             "configuration": config_info,
             "database_status": {
                 "connected": db_manager.connected,
-                "client_exists": bool(db_manager.client),
-                "db_exists": bool(db_manager.db)
+                "client_exists": db_manager.client is not None,
+                "db_exists": db_manager.db is not None
             }
         })
         
