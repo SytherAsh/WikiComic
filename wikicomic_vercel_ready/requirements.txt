@@ -7,4 +7,3 @@ Pillow
 python-dotenv
 google-genai
 pymongo
-bson
