@@ -19,13 +19,7 @@ const ComicsGallery = () => {
     try {
       setLoading(true);
       setError(null);
-      console.log('ComicsGallery: Fetching comics from:', `${API_BASE_URL}/comics`);
       const response = await axios.get(`${API_BASE_URL}/comics`);
-      console.log('ComicsGallery: Response data:', response.data);
-      console.log('ComicsGallery: Response data type:', typeof response.data);
-      console.log('ComicsGallery: Response data keys:', Object.keys(response.data || {}));
-      console.log('ComicsGallery: response.data.comics exists:', !!response.data?.comics);
-      console.log('ComicsGallery: response.data.comics length:', response.data?.comics?.length);
       
       if (response.data && response.data.comics) {
         setComics(response.data.comics);
@@ -47,23 +41,18 @@ const ComicsGallery = () => {
 
   // Helper function to get the first image URL for a comic
   const getFirstImageUrl = (comic) => {
-    console.log('ComicsGallery: Getting first image for comic:', comic.title);
-    
     // Try to get from images array first (MongoDB format)
     if (comic.images && comic.images.length > 0) {
       const firstImage = comic.images[0];
-      console.log('ComicsGallery: Found image in images array:', firstImage);
       return getImageUrl(firstImage);
     }
     
     // Fallback to scenes array
     if (comic.scenes && comic.scenes.length > 0) {
       const firstScene = comic.scenes[0];
-      console.log('ComicsGallery: Found image in scenes array:', firstScene);
       return getImageUrl(firstScene);
     }
     
-    console.log('ComicsGallery: No images found for comic:', comic.title);
     return '/placeholder-comic.png';
   };
 
@@ -150,12 +139,8 @@ const ComicsGallery = () => {
                     alt={comic.title}
                     className="object-cover w-full h-48 rounded-t-2xl border-b-4 border-black bg-white"
                     onError={(e) => {
-                      console.error('ComicsGallery: Failed to load image for comic:', comic.title);
                       e.target.onerror = null;
                       e.target.src = '/placeholder-comic.png';
-                    }}
-                    onLoad={() => {
-                      console.log('ComicsGallery: Image loaded successfully for comic:', comic.title);
                     }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">

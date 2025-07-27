@@ -161,8 +161,6 @@ class ComicImageGenerator:
             prompt = scene.get("prompt", f"Scene {idx+1}")
             dialogue = scene.get("dialogue", "")
             
-            logger.info(f"Generating image for scene {idx+1}: {prompt[:50]}...")
-            
             # Generate image
             image_data = self.generate_comic_image(prompt, style, dialogue)
             
@@ -191,21 +189,18 @@ class ComicImageGenerator:
                         "scene_number": idx + 1
                     })
                     
-                    logger.info(f"✅ Scene {idx+1} stored with ID: {image_id}")
-                    
                 except Exception as e:
-                    logger.error(f"❌ Failed to store scene {idx+1}: {e}")
+                    logger.error(f"Failed to store scene {idx+1}: {e}")
             else:
-                logger.error(f"❌ Failed to generate image for scene {idx+1}")
+                logger.error(f"Failed to generate image for scene {idx+1}")
 
         # Store comic metadata
         if scene_data:
             try:
                 comic_id = db_manager.store_comic(title, scene_data, style)
-                logger.info(f"✅ Comic '{title}' stored with ID: {comic_id}")
                 return scene_data
             except Exception as e:
-                logger.error(f"❌ Failed to store comic metadata: {e}")
+                logger.error(f"Failed to store comic metadata: {e}")
                 # Clean up stored images if comic metadata storage fails
                 for image_id in stored_image_ids:
                     try:

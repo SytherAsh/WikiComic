@@ -33,8 +33,7 @@ class MongoDBManager:
             # Check if MongoDB URI is configured
             mongodb_uri = app.config.get('MONGODB_URI')
             if not mongodb_uri:
-                logger.error("❌ MONGODB_URI environment variable is not set")
-                logger.info("💡 Please set up MongoDB Atlas and configure MONGODB_URI in your environment variables")
+                logger.error("MONGODB_URI environment variable is not set")
                 self.connected = False
                 return
             
@@ -48,7 +47,7 @@ class MongoDBManager:
             
             # Test connection
             self.client.admin.command('ping')
-            logger.info("✅ Successfully connected to MongoDB!")
+            logger.info("MongoDB connected successfully")
             
             # Initialize database and collections
             self.db = self.client[app.config['MONGODB_DB_NAME']]
@@ -64,19 +63,16 @@ class MongoDBManager:
             self.connected = True
             
         except (ConnectionFailure, ServerSelectionTimeoutError) as e:
-            logger.error(f"❌ MongoDB connection failed: {e}")
-            logger.info("💡 Please check your MONGODB_URI and ensure MongoDB Atlas is accessible")
+            logger.error(f"MongoDB connection failed: {e}")
             self.connected = False
-            # Don't raise the exception - allow the app to start without MongoDB
         except Exception as e:
-            logger.error(f"❌ MongoDB initialization error: {e}")
+            logger.error(f"MongoDB initialization error: {e}")
             self.connected = False
-            # Don't raise the exception - allow the app to start without MongoDB
     
     def _check_connection(self):
         """Check if MongoDB is connected before performing operations"""
         if not self.connected:
-            logger.error("❌ MongoDB is not connected. Please check your configuration.")
+            logger.error("MongoDB is not connected")
             return False
         return True
     
@@ -85,7 +81,6 @@ class MongoDBManager:
         try:
             # Check if collections are properly initialized
             if self.images_collection is None or self.comics_collection is None or self.scenes_collection is None:
-                logger.warning("⚠️ Cannot create indexes: Collections not initialized")
                 return
                 
             # Index for images collection
@@ -101,9 +96,8 @@ class MongoDBManager:
             self.scenes_collection.create_index([("comic_id", 1)])
             self.scenes_collection.create_index([("scene_number", 1)])
             
-            logger.info("✅ Database indexes created successfully")
         except Exception as e:
-            logger.warning(f"⚠️ Index creation failed: {e}")
+            logger.warning(f"Index creation failed: {e}")
     
     def store_image(self, image_data: bytes, comic_title: str, scene_number: int, 
                    scene_text: str, metadata: Dict[str, Any] = None) -> str:
@@ -158,11 +152,10 @@ class MongoDBManager:
             
             self.images_collection.insert_one(image_doc)
             
-            logger.info(f"✅ Image stored successfully: {file_id}")
             return str(file_id)
             
         except Exception as e:
-            logger.error(f"❌ Failed to store image: {e}")
+            logger.error(f"Failed to store image: {e}")
             raise
     
     def get_image(self, image_id: str) -> Optional[Dict[str, Any]]:
@@ -273,23 +266,18 @@ class MongoDBManager:
             return []
             
         try:
-            logger.info("🔍 Starting to retrieve all comics...")
             comics = []
             
             # Count total comics in collection
             total_comics = self.comics_collection.count_documents({})
-            logger.info(f"📊 Total comics in database: {total_comics}")
             
             for comic in self.comics_collection.find().sort("created_at", -1):
                 # Ensure comic is not None and has required fields
                 if not comic:
-                    logger.warning("⚠️ Found None comic document, skipping...")
                     continue
                     
                 comic_id = str(comic.get("_id", ""))
                 comic_title = comic.get("title", "")
-                
-                logger.info(f"📖 Processing comic: {comic_title} (ID: {comic_id})")
                 
                 # Get images for this comic
                 images = self.images_collection.find({"comic_title": comic_title}).sort("scene_number", 1)
@@ -305,17 +293,14 @@ class MongoDBManager:
                             "scene_text": img.get("scene_text", "")
                         })
                 
-                logger.info(f"��️ Found {len(image_list)} images for comic: {comic_title}")
-                
                 comic["images"] = image_list
                 comic["_id"] = comic_id
                 comics.append(comic)
             
-            logger.info(f"✅ Successfully retrieved {len(comics)} comics")
             return comics
             
         except Exception as e:
-            logger.error(f"❌ Failed to get all comics: {e}")
+            logger.error(f"Failed to get all comics: {e}")
             return []
     
     def get_comic_by_title(self, title: str) -> Optional[Dict[str, Any]]:
