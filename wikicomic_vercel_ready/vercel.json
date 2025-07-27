@@ -1,21 +1,34 @@
 {
   "version": 2,
   "builds": [
-    { 
-      "src": "api/index.py", 
+    {
+      "src": "wikicomic_vercel_ready/api/index.py",
       "use": "@vercel/python",
       "config": {
         "maxLambdaSize": "50mb"
       }
+    },
+    {
+      "src": "wikicomic_react/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
     }
   ],
   "routes": [
-    { "src": "/(.*)", "dest": "api/index.py" }
+    {
+      "src": "/api/(.*)",
+      "dest": "wikicomic_vercel_ready/api/index.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "wikicomic_react/$1"
+    }
   ],
   "functions": {
-    "api/index.py": {
+    "wikicomic_vercel_ready/api/index.py": {
       "maxDuration": 300
-      
     }
   }
-} 
+}
