@@ -214,6 +214,7 @@ MONGODB_COLLECTION=comics
 GROQ_API_KEY=your-groq-api-key-here
 GEMINI_API_KEY=your-gemini-api-key-here
 
+
 # CORS Configuration
 CORS_ORIGINS=http://localhost:3000,http://localhost:5173
 
