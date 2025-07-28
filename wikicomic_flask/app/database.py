@@ -7,10 +7,12 @@ from typing import Optional, List, Dict, Any
 from bson import ObjectId
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
-from pymongo.errors import ConnectionFailure, OperationFailure
+from pymongo.errors import ConnectionFailure, OperationFailure, ServerSelectionTimeoutError
 from gridfs import GridFS
 from PIL import Image
 import json
+from functools import lru_cache
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +24,10 @@ class MongoDBManager:
         self.images_collection = None
         self.comics_collection = None
         self.scenes_collection = None
+        self.connected = False
+        self._connection_pool = {}
+        self._cache = {}
+        self._cache_ttl = 300  # 5 minutes cache
         
         if app is not None:
             self.init_app(app)
@@ -29,15 +35,30 @@ class MongoDBManager:
     def init_app(self, app):
         """Initialize MongoDB connection with Flask app"""
         try:
-            # Connect to MongoDB
+            # Check if MongoDB URI is configured
+            mongodb_uri = app.config.get('MONGODB_URI')
+            if not mongodb_uri:
+                logger.error("MONGODB_URI environment variable is not set")
+                self.connected = False
+                return
+            
+            # Connect to MongoDB with optimized settings
             self.client = MongoClient(
-                app.config['MONGODB_URI'],
-                server_api=ServerApi('1')
+                mongodb_uri,
+                server_api=ServerApi('1'),
+                serverSelectionTimeoutMS=5000,  # Reduced timeout
+                connectTimeoutMS=5000,
+                socketTimeoutMS=5000,
+                maxPoolSize=10,  # Connection pooling
+                minPoolSize=1,
+                maxIdleTimeMS=30000,
+                retryWrites=True,
+                retryReads=True
             )
             
-            # Test connection
-            self.client.admin.command('ping')
-            logger.info("✅ Successfully connected to MongoDB!")
+            # Test connection with timeout
+            self.client.admin.command('ping', serverSelectionTimeoutMS=5000)
+            logger.info("MongoDB connected successfully")
             
             # Initialize database and collections
             self.db = self.client[app.config['MONGODB_DB_NAME']]
@@ -50,16 +71,54 @@ class MongoDBManager:
             # Create indexes for better performance
             self._create_indexes()
             
-        except ConnectionFailure as e:
-            logger.error(f"❌ MongoDB connection failed: {e}")
-            raise
+            self.connected = True
+            
+        except (ConnectionFailure, ServerSelectionTimeoutError) as e:
+            logger.error(f"MongoDB connection failed: {e}")
+            self.connected = False
         except Exception as e:
-            logger.error(f"❌ MongoDB initialization error: {e}")
-            raise
+            logger.error(f"MongoDB initialization error: {e}")
+            self.connected = False
+    
+    def _check_connection(self):
+        """Check if MongoDB is connected before performing operations"""
+        if not self.connected:
+            logger.error("MongoDB is not connected")
+            return False
+        return True
+    
+    def _get_cache_key(self, prefix: str, *args) -> str:
+        """Generate cache key"""
+        return f"{prefix}:{':'.join(str(arg) for arg in args)}"
+    
+    def _is_cache_valid(self, cache_key: str) -> bool:
+        """Check if cache entry is still valid"""
+        if cache_key not in self._cache:
+            return False
+        cache_time, _ = self._cache[cache_key]
+        return time.time() - cache_time < self._cache_ttl
+    
+    def _set_cache(self, cache_key: str, data: Any):
+        """Set cache entry"""
+        self._cache[cache_key] = (time.time(), data)
+        # Clean old cache entries
+        current_time = time.time()
+        self._cache = {k: v for k, v in self._cache.items() 
+                      if current_time - v[0] < self._cache_ttl}
+    
+    def _get_cache(self, cache_key: str) -> Optional[Any]:
+        """Get cache entry if valid"""
+        if self._is_cache_valid(cache_key):
+            return self._cache[cache_key][1]
+        return None
     
     def _create_indexes(self):
         """Create database indexes for better performance"""
         try:
+            # Check if collections are properly initialized
+            if self.images_collection is None or self.comics_collection is None or self.scenes_collection is None:
+                return
+                
             # Index for images collection
             self.images_collection.create_index([("comic_title", 1)])
             self.images_collection.create_index([("scene_number", 1)])
@@ -73,9 +132,8 @@ class MongoDBManager:
             self.scenes_collection.create_index([("comic_id", 1)])
             self.scenes_collection.create_index([("scene_number", 1)])
             
-            logger.info("✅ Database indexes created successfully")
         except Exception as e:
-            logger.warning(f"⚠️ Index creation failed: {e}")
+            logger.warning(f"Index creation failed: {e}")
     
     def store_image(self, image_data: bytes, comic_title: str, scene_number: int, 
                    scene_text: str, metadata: Dict[str, Any] = None) -> str:
@@ -92,6 +150,13 @@ class MongoDBManager:
         Returns:
             ObjectId of the stored image
         """
+        if not self._check_connection():
+            raise ConnectionError("MongoDB is not connected")
+            
+        # Check if collections are properly initialized
+        if self.fs is None or self.images_collection is None:
+            raise ConnectionError("Database collections not initialized")
+            
         try:
             # Prepare metadata
             file_metadata = {
@@ -123,11 +188,10 @@ class MongoDBManager:
             
             self.images_collection.insert_one(image_doc)
             
-            logger.info(f"✅ Image stored successfully: {file_id}")
             return str(file_id)
             
         except Exception as e:
-            logger.error(f"❌ Failed to store image: {e}")
+            logger.error(f"Failed to store image: {e}")
             raise
     
     def get_image(self, image_id: str) -> Optional[Dict[str, Any]]:
@@ -140,6 +204,15 @@ class MongoDBManager:
         Returns:
             Dictionary with image data and metadata
         """
+        if not self._check_connection():
+            logger.error("❌ Cannot retrieve image: MongoDB is not connected")
+            return None
+            
+        # Check if collections are properly initialized
+        if self.fs is None or self.images_collection is None:
+            logger.error("❌ Cannot retrieve image: Database collections not initialized")
+            return None
+            
         try:
             # Get file from GridFS
             grid_out = self.fs.get(ObjectId(image_id))
@@ -172,6 +245,13 @@ class MongoDBManager:
         Returns:
             ObjectId of the stored comic
         """
+        if not self._check_connection():
+            raise ConnectionError("MongoDB is not connected")
+            
+        # Check if collection is properly initialized
+        if self.comics_collection is None:
+            raise ConnectionError("Database collection not initialized")
+            
         try:
             comic_doc = {
                 "title": title,
@@ -192,31 +272,62 @@ class MongoDBManager:
     
     def get_comic(self, comic_id: str) -> Optional[Dict[str, Any]]:
         """Get comic by ID"""
+        if not self._check_connection():
+            logger.error("❌ Cannot retrieve comic: MongoDB is not connected")
+            return None
+            
+        # Check if collection is properly initialized
+        if self.comics_collection is None:
+            logger.error("❌ Cannot retrieve comic: Database collection not initialized")
+            return None
+            
         try:
-            return self.comics_collection.find_one({"_id": ObjectId(comic_id)})
+            comic = self.comics_collection.find_one({"_id": ObjectId(comic_id)})
+            if comic:
+                comic["_id"] = str(comic.get("_id", ""))
+            return comic
         except Exception as e:
             logger.error(f"❌ Failed to get comic {comic_id}: {e}")
             return None
     
     def get_all_comics(self) -> List[Dict[str, Any]]:
         """Get all comics with their scenes and images"""
+        if not self._check_connection():
+            logger.error("❌ Cannot retrieve comics: MongoDB is not connected")
+            return []
+            
+        # Check if collections are properly initialized
+        if self.comics_collection is None or self.images_collection is None:
+            logger.error("❌ Cannot retrieve comics: Database collections not initialized")
+            return []
+            
         try:
             comics = []
+            
+            # Count total comics in collection
+            total_comics = self.comics_collection.count_documents({})
+            
             for comic in self.comics_collection.find().sort("created_at", -1):
-                comic_id = str(comic["_id"])
+                # Ensure comic is not None and has required fields
+                if not comic:
+                    continue
+                    
+                comic_id = str(comic.get("_id", ""))
+                comic_title = comic.get("title", "")
                 
                 # Get images for this comic
-                images = self.images_collection.find({"comic_title": comic["title"]}).sort("scene_number", 1)
+                images = self.images_collection.find({"comic_title": comic_title}).sort("scene_number", 1)
                 
                 # Convert images to list with proper URLs
                 image_list = []
                 for img in images:
-                    image_list.append({
-                        "id": str(img["_id"]),
-                        "url": f"/api/images/{img['_id']}",
-                        "scene_number": img["scene_number"],
-                        "scene_text": img["scene_text"]
-                    })
+                    if img:  # Ensure img is not None
+                        image_list.append({
+                            "id": str(img.get("_id", "")),
+                            "url": f"/api/images/{img.get('_id', '')}",
+                            "scene_number": img.get("scene_number", 0),
+                            "scene_text": img.get("scene_text", "")
+                        })
                 
                 comic["images"] = image_list
                 comic["_id"] = comic_id
@@ -225,15 +336,24 @@ class MongoDBManager:
             return comics
             
         except Exception as e:
-            logger.error(f"❌ Failed to get all comics: {e}")
+            logger.error(f"Failed to get all comics: {e}")
             return []
     
     def get_comic_by_title(self, title: str) -> Optional[Dict[str, Any]]:
         """Get comic by title"""
+        if not self._check_connection():
+            logger.error("❌ Cannot retrieve comic: MongoDB is not connected")
+            return None
+            
+        # Check if collection is properly initialized
+        if self.comics_collection is None:
+            logger.error("❌ Cannot retrieve comic: Database collection not initialized")
+            return None
+            
         try:
             comic = self.comics_collection.find_one({"title": title})
             if comic:
-                comic["_id"] = str(comic["_id"])
+                comic["_id"] = str(comic.get("_id", ""))
                 return comic
             return None
         except Exception as e:
@@ -242,22 +362,37 @@ class MongoDBManager:
     
     def delete_comic(self, comic_id: str) -> bool:
         """Delete comic and all associated images"""
+        if not self._check_connection():
+            logger.error("❌ Cannot delete comic: MongoDB is not connected")
+            return False
+            
+        # Check if collections are properly initialized
+        if self.comics_collection is None or self.images_collection is None or self.fs is None:
+            logger.error("❌ Cannot delete comic: Database collections not initialized")
+            return False
+            
         try:
             # Get comic to find associated images
             comic = self.get_comic(comic_id)
             if not comic:
                 return False
             
+            comic_title = comic.get("title", "")
+            if not comic_title:
+                logger.error(f"❌ Comic {comic_id} has no title")
+                return False
+            
             # Delete all images for this comic
-            images = self.images_collection.find({"comic_title": comic["title"]})
+            images = self.images_collection.find({"comic_title": comic_title})
             for img in images:
-                try:
-                    self.fs.delete(img["_id"])
-                except:
-                    pass  # Image might already be deleted
+                if img and img.get("_id"):
+                    try:
+                        self.fs.delete(img["_id"])
+                    except:
+                        pass  # Image might already be deleted
             
             # Delete image documents
-            self.images_collection.delete_many({"comic_title": comic["title"]})
+            self.images_collection.delete_many({"comic_title": comic_title})
             
             # Delete comic document
             result = self.comics_collection.delete_one({"_id": ObjectId(comic_id)})

@@ -11,32 +11,32 @@ class StoryGenerator:
     STYLE_PROMPTS = {
         'Manga': {
             'name': 'MANGA MADNESS',
-            'prompt': 'manga art style, dynamic action poses, large expressive eyes, flowing hair, speed lines, dramatic lighting, emotional facial expressions, clean line art, vibrant colors, multiple comic panels with speech bubbles, professional manga page layout, character-driven storytelling',
+            'prompt': 'professional manga comic book page, ultra-detailed manga art style, dynamic action poses with fluid motion lines, large expressive eyes with detailed iris and highlights, flowing hair with individual strands and movement, speed lines and motion effects, dramatic lighting with strong shadows and highlights, emotional facial expressions with clear emotion, clean precise line art with varying line weights, vibrant saturated colors with perfect contrast, multiple comic panels with clear borders and gutters, professional manga page layout with proper panel flow, detailed character designs with distinctive features, background details that enhance storytelling, atmospheric lighting effects, detailed clothing with folds and textures, expressive hand gestures and body language, cinematic camera angles and compositions, high-quality shading and highlights, professional comic book typography, clear visual hierarchy, balanced composition with proper use of negative space, manga-style character proportions, detailed environmental elements, mood-setting color palettes, professional inking techniques, clear visual storytelling flow',
             'tone': 'energetic and emotional'
         },
         'Western': {
             'name': 'RETRO COMICS',
-            'prompt': 'classic western comic book style, bold primary colors, strong black outlines, halftone dots, vintage comic aesthetics, muscular superhero poses, dramatic shadows, comic book panels with clear borders, speech bubbles with bold text, action-packed scenes, retro comic book feel, epic storytelling',
+            'prompt': 'classic western comic book masterpiece, bold primary colors with perfect saturation, strong black outlines with varying line weights, halftone dots and screen effects, vintage comic aesthetics with retro charm, muscular superhero poses with dynamic anatomy, dramatic shadows with chiaroscuro lighting, comic book panels with clear borders and gutters, speech bubbles with bold readable text and proper spacing, action-packed scenes with motion lines, retro comic book feel with golden age influence, detailed character designs with heroic proportions, expressive faces with clear emotions, detailed backgrounds with depth and atmosphere, professional inking with cross-hatching, vibrant color palette with perfect contrast, cinematic compositions with dramatic angles, detailed clothing and accessories, atmospheric lighting effects, clear visual storytelling, professional typography with proper kerning, balanced panel layouts, detailed environmental elements, mood-setting color schemes, high-quality shading techniques, clear character expressions, professional comic book quality',
             'tone': 'nostalgic and bold'
         },
         'Minimalist': {
             'name': 'SLEEK STYLE',
-            'prompt': 'minimalist comic layout, clean geometric panels, limited color palette with bold contrasts, simple expressive line work, modern design aesthetic, elegant typography, focused storytelling with clear visual hierarchy, sophisticated composition, refined narrative approach',
+            'prompt': 'sophisticated minimalist comic layout, clean geometric panels with perfect proportions, limited color palette with bold high-contrast colors, simple expressive line work with precise strokes, modern design aesthetic with contemporary appeal, elegant typography with perfect readability, focused storytelling with clear visual hierarchy, sophisticated composition with balanced elements, refined narrative approach with clean layouts, detailed character expressions despite minimal style, clear dialogue presentation, professional minimalist design, clean panel borders and gutters, balanced use of negative space, modern color theory application, precise line weights and spacing, sophisticated visual flow, elegant character designs, clean environmental elements, professional minimalist quality, clear visual storytelling, refined artistic approach',
             'tone': 'sophisticated and modern'
         },
         'Cartoon': {
             'name': 'WACKY TOONS',
-            'prompt': 'vibrant cartoon comic style, exaggerated character expressions, bouncy animation feel, bright cheerful colors, rounded shapes, fun visual elements, multiple panels with clear speech bubbles, playful design, family-friendly aesthetic, dynamic character poses, humorous storytelling',
+            'prompt': 'vibrant cartoon comic masterpiece, exaggerated character expressions with maximum emotion, bouncy animation feel with dynamic poses, bright cheerful colors with perfect saturation, rounded shapes with smooth curves, fun visual elements with playful details, multiple panels with clear speech bubbles and perfect readability, playful design with family-friendly aesthetic, dynamic character poses with fluid motion, humorous storytelling with clear visual gags, detailed character designs with distinctive features, expressive faces with large eyes and clear emotions, detailed backgrounds with cartoon charm, professional cartoon quality, clear dialogue presentation, balanced color palette, smooth line work, professional typography, clear visual hierarchy, engaging character interactions, detailed environmental elements, mood-setting lighting, professional cartoon art style',
             'tone': 'playful and energetic'
         },
         'Noir': {
             'name': 'DARK NOIR',
-            'prompt': 'noir comic layout, high contrast black and white with selective color, dramatic shadows and lighting, gritty urban atmosphere, cinematic angles, moody expressions, dark comic panels with white text bubbles, mysterious and dramatic mood, film noir aesthetic, atmospheric storytelling',
+            'prompt': 'atmospheric noir comic masterpiece, high contrast black and white with selective color accents, dramatic shadows and lighting with chiaroscuro effects, gritty urban atmosphere with detailed cityscapes, cinematic angles with dramatic perspectives, moody expressions with deep emotional impact, dark comic panels with white text bubbles and perfect readability, mysterious and dramatic mood with film noir aesthetic, atmospheric storytelling with mood-setting elements, detailed character designs with noir style, expressive faces with shadow play, detailed backgrounds with urban details, professional noir quality, clear dialogue presentation despite dark theme, balanced contrast ratios, smooth line work, professional typography, clear visual hierarchy, engaging character interactions, detailed environmental elements, mood-setting lighting effects, professional noir art style',
             'tone': 'mysterious and dramatic'
         },
         'Indie': {
             'name': 'INDIE VIBES',
-            'prompt': 'indie comic style, hand-drawn artistic feel, experimental panel layouts, unique artistic touch, personal drawing style, creative use of space, artistic ink work, distinctive character designs, alternative comic book aesthetic, expressive dialogue bubbles, artistic storytelling',
+            'prompt': 'artistic indie comic masterpiece, hand-drawn artistic feel with personal touch, experimental panel layouts with creative compositions, unique artistic touch with distinctive style, personal drawing style with character, creative use of space with innovative layouts, artistic ink work with varied techniques, distinctive character designs with personality, alternative comic book aesthetic with artistic merit, expressive dialogue bubbles with creative typography, artistic storytelling with visual poetry, detailed character expressions with emotional depth, detailed backgrounds with artistic interpretation, professional indie quality, clear dialogue presentation, balanced artistic elements, smooth line work, creative typography, clear visual hierarchy, engaging character interactions, detailed environmental elements, mood-setting artistic style, professional indie art approach',
             'tone': 'artistic and personal'
         }
     }
@@ -61,33 +61,45 @@ class StoryGenerator:
 
         categories_str = ", ".join(categories[:10])  # Limit to top 10 for prompt brevity
 
-        prompt = f"""You are a master comic book storyteller. Create an engaging, dialogue-rich comic book storyline titled '{title}' in {style_info['name']} style.
+        prompt = f"""You are a master comic book storyteller and visual artist. Create an engaging, dialogue-rich comic book storyline titled '{title}' in {style_info['name']} style.
 
 CRITICAL REQUIREMENTS:
 - Every scene MUST include character dialogue or narration
-- Create 2-3 main characters who will drive the story
+- Create 2-3 main characters who will drive the story with distinctive personalities
 - Include emotional moments, conflicts, and character development
-- Make the story educational while being entertaining
+- Make the story educational while being entertaining and visually engaging
 - Ensure each scene has clear visual and narrative progression
+- Focus on creating scenes that will translate beautifully to comic panels
 
 Style Requirements:
 - Use a {style_info['tone']} narrative tone throughout
 - Emphasize visual storytelling that matches: {style_info['prompt']}
 - Story length should be around {word_count} words
 - Structure the story into distinct, panel-ready scenes with clear beginnings, middles, and endings
+- Create scenes with strong visual impact and clear character interactions
 
 Character Development Guidelines:
 - Create a protagonist who learns or discovers something about the topic
-- Include a mentor/guide character who explains concepts
-- Add an antagonist or challenge that creates conflict
-- Each character should have distinct personalities and speech patterns
+- Include a mentor/guide character who explains concepts clearly
+- Add an antagonist or challenge that creates conflict and tension
+- Each character should have distinct personalities, speech patterns, and visual characteristics
+- Include character emotions and reactions that can be visually expressed
 
 Dialogue Requirements:
 - Every scene must have meaningful character conversations
-- Use dialogue to explain complex concepts naturally
+- Use dialogue to explain complex concepts naturally and engagingly
 - Include emotional reactions and character interactions
 - Mix dialogue with narration for storytelling variety
-- Ensure dialogue advances the plot and reveals character
+- Ensure dialogue advances the plot and reveals character personality
+- Create dialogue that will work well in speech bubbles
+
+Visual Storytelling Guidelines:
+- Create scenes with clear visual elements that can be drawn
+- Include character poses, expressions, and body language
+- Describe environments and settings that enhance the story
+- Use lighting and mood to create atmosphere
+- Include action and movement where appropriate
+- Create scenes with varied compositions and camera angles
 
 Context for story creation:
 - Summary of the topic: "{summary.strip()}"
@@ -96,14 +108,13 @@ Context for story creation:
 {content}
 
 Story Structure:
-1. Introduction: Introduce characters and the main topic
-2. Development: Characters explore and learn about the topic
-3. Conflict: Challenges or misunderstandings arise
+1. Introduction: Introduce characters and the main topic with visual impact
+2. Development: Characters explore and learn about the topic through interaction
+3. Conflict: Challenges or misunderstandings arise with dramatic tension
 4. Resolution: Characters overcome obstacles and gain understanding
-5. Conclusion: Characters reflect on what they've learned
+5. Conclusion: Characters reflect on what they've learned with emotional closure
 
-Ensure the comic story is both educational and emotionally engaging, with every scene containing meaningful dialogue that advances the plot and educates the reader about '{title}'.
-        """
+Output a compelling comic book storyline that educates while entertaining, with strong visual elements and clear character interactions that will translate beautifully to comic panels."""
 
         try:
             response = self.client.chat.completions.create(
@@ -117,122 +128,106 @@ Ensure the comic story is both educational and emotionally engaging, with every 
             logger.error(f"Error generating storyline: {e}")
             return None
 
-
     def generate_scene_prompts_and_dialogues(self, title, storyline, target_length="medium", comic_style='Manga'):
         style_info = self.STYLE_PROMPTS.get(comic_style, self.STYLE_PROMPTS['Manga'])
         length_info = self.LENGTH_SETTINGS.get(target_length, self.LENGTH_SETTINGS['medium'])
         num_scenes = length_info['scenes']
 
-        system_prompt = f"""You are a professional comic writer and artist specializing in {style_info['name']} style. Create {num_scenes} detailed scenes for a comic titled '{title}'.
+        system_prompt = f"""You are a professional comic writer and visual artist specializing in {style_info['name']} style. Create {num_scenes} highly detailed scenes for a comic titled '{title}'.
 
-CRITICAL REQUIREMENTS FOR EACH SCENE:
-1. DIALOGUE IS MANDATORY: Every scene MUST include meaningful character dialogue or narration
-2. VISUAL DETAILS: Provide vivid, specific visual descriptions for the artist
-3. CHARACTER INTERACTION: Include conversations between characters that advance the story
-4. EMOTIONAL DEPTH: Show character emotions and reactions through dialogue
-5. EDUCATIONAL VALUE: Use dialogue to explain concepts about the topic naturally
+CRITICAL REQUIREMENTS:
+- Each scene MUST have both an extremely detailed visual prompt AND meaningful character dialogue
+- Create scenes that flow logically from the storyline with clear visual progression
+- Include a mix of action, dialogue, and exposition scenes with strong visual impact
+- Ensure each scene advances the story and reveals character personality
+- Focus on creating scenes that will generate beautiful, professional comic panels
 
-DIALOGUE GUIDELINES:
-- Every scene must have at least 2-3 lines of dialogue or narration
-- Use dialogue to explain complex concepts in simple terms
-- Include character reactions and emotional responses
-- Mix character conversations with narrative exposition
-- If no character dialogue fits, use narrator commentary or thought bubbles
+VISUAL PROMPT REQUIREMENTS (EXTREMELY DETAILED):
+- Describe specific character poses, expressions, and body language in detail
+- Include detailed environmental descriptions with specific visual elements
+- Specify lighting, mood, and atmospheric effects
+- Mention camera angles and panel composition with precision
+- Include character clothing, accessories, and distinctive features
+- Describe background elements that support the story
+- Specify color schemes and visual mood
+- Include motion lines, effects, and dynamic elements where appropriate
+- Describe facial expressions and emotional states clearly
+- Include hand gestures and character interactions
+- Specify panel layout and visual flow
 
-VISUAL PROMPT GUIDELINES:
-- Describe specific character poses, expressions, and actions
-- Include environmental details and setting descriptions
-- Specify lighting, mood, and atmosphere
-- Mention camera angles and panel composition
-- Include visual elements that support the dialogue
+DIALOGUE REQUIREMENTS:
+- Every scene must have meaningful character conversations
+- Use dialogue to explain concepts naturally and engagingly
+- Include emotional reactions and character personality
+- Create dialogue that will work perfectly in speech bubbles
+- Ensure each character has a distinct voice and speaking style
+- Include both dialogue and narration where appropriate
 
-Storyline Context:
+Style Guidelines:
+- Visual prompts should match: {style_info['prompt']}
+- Dialogue should be {style_info['tone']} in tone
+- Include character emotions and reactions that can be visually expressed
+- Create dynamic, visually interesting scenes with strong composition
+- Focus on scenes that will translate beautifully to comic art
+
+Storyline to adapt:
 {storyline}
 
-Style Characteristics: {style_info['prompt']}
-Tone: {style_info['tone']}
+Output format for each scene:
+Scene X:
+- prompt: "EXTREMELY detailed visual description including character poses, expressions, setting, lighting, mood, camera angles, panel composition, environmental details, character interactions, and all visual elements needed for professional comic art"
+- dialogue: "Meaningful character conversations and interactions that advance the story and reveal character personality"
 
-Remember: NO SCENE should be dialogue-free. Every scene must educate and entertain through character interaction and visual storytelling.
-"""
-
-        user_prompt = f"""Create exactly {num_scenes} scenes. Each scene object must contain:
-
-{{
-  "prompt": "Detailed visual description including character poses, expressions, setting, lighting, and mood. Be specific about what the artist should draw.",
-  "dialogue": "2-3 lines of meaningful character dialogue or narration that explains concepts and advances the story. NEVER leave this empty."
-}}
-
-Return ONLY a valid JSON array. Each scene must have both 'prompt' and 'dialogue' fields populated with substantial content."""
+Create exactly {num_scenes} scenes that tell the complete story with maximum visual detail and engaging dialogue."""
 
         try:
             response = self.client.chat.completions.create(
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                model="llama3-8b-8192",
-                temperature=0.7,
-                max_tokens=2000
+                messages=[{"role": "user", "content": system_prompt}],
+                model="llama-3.1-8b-instant",
+                temperature=0.8,
+                max_tokens=4000,
             )
-
+            
             content = response.choices[0].message.content
-            logger.debug(f"Raw scene response:\n{content}")
-
-            try:
-                scenes = json.loads(content)
-                # Validate and enhance scenes
-                enhanced_scenes = []
-                for i, scene in enumerate(scenes):
-                    prompt = scene.get("prompt", f"Scene {i+1}: {title}")
-                    dialogue = scene.get("dialogue", "")
-                    
-                    # If dialogue is empty or too short, add narration
-                    if not dialogue or len(dialogue.strip()) < 10:
-                        dialogue = f"Narrator: This scene shows important aspects of {title}. Let's explore what makes this topic fascinating and significant."
-                    
-                    # Enhance prompt if too basic
-                    if len(prompt) < 50:
-                        prompt = f"Scene {i+1}: A detailed view of {title} with characters engaged in learning and discovery. Dynamic poses, expressive faces, and educational atmosphere."
-                    
-                    enhanced_scenes.append({
-                        "prompt": prompt,
-                        "dialogue": dialogue
-                    })
-                
-                return enhanced_scenes
-                
-            except json.JSONDecodeError:
-                json_match = re.search(r'\[.*\]', content, re.DOTALL)
-                if json_match:
-                    scenes = json.loads(json_match.group())
-                    # Apply same validation as above
-                    enhanced_scenes = []
-                    for i, scene in enumerate(scenes):
-                        prompt = scene.get("prompt", f"Scene {i+1}: {title}")
-                        dialogue = scene.get("dialogue", "")
-                        
-                        if not dialogue or len(dialogue.strip()) < 10:
-                            dialogue = f"Narrator: This scene shows important aspects of {title}. Let's explore what makes this topic fascinating and significant."
-                        
-                        if len(prompt) < 50:
-                            prompt = f"Scene {i+1}: A detailed view of {title} with characters engaged in learning and discovery. Dynamic poses, expressive faces, and educational atmosphere."
-                        
-                        enhanced_scenes.append({
-                            "prompt": prompt,
-                            "dialogue": dialogue
-                        })
-                    
-                    return enhanced_scenes
-                else:
-                    raise ValueError("Could not parse valid JSON array from the response.")
-
+            return self._parse_scenes(content, num_scenes)
+            
         except Exception as e:
             logger.error(f"Error generating scenes: {e}")
-            # Return enhanced fallback scenes with dialogue
-            fallback_scenes = []
-            for i in range(num_scenes):
-                fallback_scenes.append({
-                    'prompt': f"Scene {i+1}: A detailed comic panel showing characters learning about {title}. Dynamic poses, expressive faces, educational setting with visual elements that explain the topic.",
-                    'dialogue': f"Character: Let me tell you about {title}. It's fascinating because... Narrator: This discovery changes everything we thought we knew."
-                })
-            return fallback_scenes
+            return []
+
+    def _parse_scenes(self, content, expected_scenes):
+        """Parse the AI response into structured scene data"""
+        scenes = []
+        lines = content.split('\n')
+        current_scene = {}
+        
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+                
+            if line.lower().startswith('scene'):
+                if current_scene:
+                    scenes.append(current_scene)
+                current_scene = {'scene_number': len(scenes) + 1}
+            elif line.startswith('- prompt:'):
+                current_scene['prompt'] = line.replace('- prompt:', '').strip().strip('"')
+            elif line.startswith('- dialogue:'):
+                current_scene['dialogue'] = line.replace('- dialogue:', '').strip().strip('"')
+            elif line.startswith('- narration:'):
+                current_scene['narration'] = line.replace('- narration:', '').strip().strip('"')
+        
+        # Add the last scene
+        if current_scene:
+            scenes.append(current_scene)
+        
+        # Ensure we have the expected number of scenes
+        while len(scenes) < expected_scenes:
+            scenes.append({
+                'scene_number': len(scenes) + 1,
+                'prompt': f"Scene {len(scenes) + 1} continuation of the story with detailed visual elements, character interactions, and atmospheric details",
+                'dialogue': "Character: Let's continue our journey and explore this fascinating topic.",
+                'narration': "The story continues with new discoveries and insights..."
+            })
+        
+        return scenes[:expected_scenes]
