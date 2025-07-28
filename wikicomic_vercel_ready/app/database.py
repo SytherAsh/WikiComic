@@ -11,6 +11,8 @@ from pymongo.errors import ConnectionFailure, OperationFailure, ServerSelectionT
 from gridfs import GridFS
 from PIL import Image
 import json
+from functools import lru_cache
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +25,9 @@ class MongoDBManager:
         self.comics_collection = None
         self.scenes_collection = None
         self.connected = False
+        self._connection_pool = {}
+        self._cache = {}
+        self._cache_ttl = 300  # 5 minutes cache
         
         if app is not None:
             self.init_app(app)
@@ -37,16 +42,22 @@ class MongoDBManager:
                 self.connected = False
                 return
             
-            # Connect to MongoDB
+            # Connect to MongoDB with optimized settings
             self.client = MongoClient(
                 mongodb_uri,
                 server_api=ServerApi('1'),
-                serverSelectionTimeoutMS=10000,  # 10 second timeout
-                connectTimeoutMS=10000
+                serverSelectionTimeoutMS=5000,  # Reduced timeout
+                connectTimeoutMS=5000,
+                socketTimeoutMS=5000,
+                maxPoolSize=10,  # Connection pooling
+                minPoolSize=1,
+                maxIdleTimeMS=30000,
+                retryWrites=True,
+                retryReads=True
             )
             
-            # Test connection
-            self.client.admin.command('ping')
+            # Test connection with timeout
+            self.client.admin.command('ping', serverSelectionTimeoutMS=5000)
             logger.info("MongoDB connected successfully")
             
             # Initialize database and collections
@@ -75,6 +86,31 @@ class MongoDBManager:
             logger.error("MongoDB is not connected")
             return False
         return True
+    
+    def _get_cache_key(self, prefix: str, *args) -> str:
+        """Generate cache key"""
+        return f"{prefix}:{':'.join(str(arg) for arg in args)}"
+    
+    def _is_cache_valid(self, cache_key: str) -> bool:
+        """Check if cache entry is still valid"""
+        if cache_key not in self._cache:
+            return False
+        cache_time, _ = self._cache[cache_key]
+        return time.time() - cache_time < self._cache_ttl
+    
+    def _set_cache(self, cache_key: str, data: Any):
+        """Set cache entry"""
+        self._cache[cache_key] = (time.time(), data)
+        # Clean old cache entries
+        current_time = time.time()
+        self._cache = {k: v for k, v in self._cache.items() 
+                      if current_time - v[0] < self._cache_ttl}
+    
+    def _get_cache(self, cache_key: str) -> Optional[Any]:
+        """Get cache entry if valid"""
+        if self._is_cache_valid(cache_key):
+            return self._cache[cache_key][1]
+        return None
     
     def _create_indexes(self):
         """Create database indexes for better performance"""

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import mangaBg from '../assets/images/manga.jpeg';
@@ -20,6 +20,19 @@ import 'react-responsive-modal/styles.css';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import QuizComponent from './QuizComponent';
 import { API_BASE_URL } from '../config/routes';
+
+// Simple debounce function
+const debounce = (func, wait) => {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+};
 
 const LandingPage = () => {
   const [topic, setTopic] = useState('');
@@ -152,6 +165,11 @@ const LandingPage = () => {
   // Only keep handleSubmit and fetchSuggestions that use /search and /suggest endpoints
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!topic.trim()) {
+      setError('Please enter a topic');
+      return;
+    }
+    
     setIsLoading(true);
     setError('');
     setResult(null);
@@ -161,18 +179,36 @@ const LandingPage = () => {
     // Clear quiz state when starting new comic creation
     setShowQuiz(false);
     setQuizScore(null);
+    
+    const startTime = Date.now();
+    
     try {
+      console.log('Starting comic generation for:', topic);
+      
       const res = await fetch(`${API_BASE_URL}/search`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/x-www-form-urlencoded', 
+          'Accept': 'application/json' 
+        },
         body: new URLSearchParams({
           query: topic,
           style: comicStyle,
           length: length
         })
       });
-      if (!res.ok) throw new Error('Failed to generate comic.');
+      
+      const elapsedTime = Date.now() - startTime;
+      console.log(`API response received in ${elapsedTime}ms`);
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('API Error:', res.status, errorText);
+        throw new Error(`Server error: ${res.status} - ${errorText}`);
+      }
+      
       const data = await res.json();
+      console.log('Comic generation response:', data);
       
       // Check if the backend returned an error message
       if (data.error) {
@@ -184,29 +220,45 @@ const LandingPage = () => {
       setStoryline(data.storyline);
       setScenes(data.scenes);
       setImages(data.images);
+      
       // Automatically navigate to the flipbook view for the new comic
       if (data.result && data.result.title) {
         navigate(`/comic/${encodeURIComponent(data.result.title)}`);
       }
+      
+      console.log(`Total comic generation time: ${Date.now() - startTime}ms`);
+      
     } catch (err) {
-      setError('Failed to generate comic.');
+      console.error('Comic generation error:', err);
+      setError(err.message || 'Failed to generate comic. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Fetch suggestions from Flask backend
+  // Fetch suggestions from Flask backend with debouncing
   const fetchSuggestions = async (query) => {
     if (!query || query.length < 2) {
       setSuggestions([]);
       setShowSuggestions(false);
       return;
     }
+    
     try {
       console.log('Fetching suggestions for query:', query);
-      console.log('Suggest URL:', `${API_BASE_URL}/suggest?query=${encodeURIComponent(query)}`);
-      const res = await fetch(`${API_BASE_URL}/suggest?query=${encodeURIComponent(query)}`);
-      console.log('Suggest response status:', res.status);
+      const startTime = Date.now();
+      
+      const res = await fetch(`${API_BASE_URL}/suggest?query=${encodeURIComponent(query)}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'max-age=300' // Cache suggestions for 5 minutes
+        }
+      });
+      
+      const elapsedTime = Date.now() - startTime;
+      console.log(`Suggestions received in ${elapsedTime}ms`);
+      
       if (res.ok) {
         const data = await res.json();
         console.log('Suggestions received:', data);
@@ -224,10 +276,17 @@ const LandingPage = () => {
     }
   };
 
-  // Handler for input change
+  // Debounced suggestion fetching
+  const debouncedFetchSuggestions = useCallback(
+    debounce(fetchSuggestions, 300),
+    []
+  );
+
+  // Handler for input change with debouncing
   const handleInputChange = (e) => {
-    setTopic(e.target.value);
-    fetchSuggestions(e.target.value);
+    const value = e.target.value;
+    setTopic(value);
+    debouncedFetchSuggestions(value);
   };
 
   // Handler for suggestion selection
